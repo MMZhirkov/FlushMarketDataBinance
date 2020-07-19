@@ -1,22 +1,31 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using BinanceExchange.API.Client;
 using BinanceExchange.API.Models.Response;
 using BinanceExchange.API.Websockets;
 using FlushMarketDataBinance.Market;
+using FlushMarketDataBinance.Model;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+
 
 namespace FlushMarketDataBinance
 {
     public class Program
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+        private static IConfiguration _iconfiguration;
 
         public static async Task Main(string[] args)
         {
+
+            GetAppSettingsFile();
+            PrintCountries();
+
             const string token = "LINKBTC";
-            const string token2 = "ETHBTC";
+            Logger.Info($"start, {token}");
 
             IBinanceRestClient binanceRestClient = new BinanceRestClient(new BinanceClientConfiguration
             {
@@ -35,10 +44,10 @@ namespace FlushMarketDataBinance
             {
                 int n = 100;
                 System.Console.WriteLine("Price : Volume");
-                
-                Logger.Info($"{e.UpdateTime}");
+               
                 if (lastUpdateTime != e.UpdateTime)
                 {
+                    Logger.Info($" time = {e.UpdateTime}");
                     try
                     {
                         System.Console.WriteLine(
@@ -47,8 +56,7 @@ namespace FlushMarketDataBinance
                            {
                                LastUpdate = e.UpdateTime,
                                Asks = e.Asks.Take(n).Reverse().Select(s => $"{s.Price} : {s.Volume}"),
-                               Bids = e.Bids.Take(n).Select(s => $"{s.Price} : {s.Volume}"),
-                               token = "LINKBTC"
+                               Bids = e.Bids.Take(n).Select(s => $"{s.Price} : {s.Volume}")
                            },
                            Formatting.Indented));
                     }
@@ -73,7 +81,25 @@ namespace FlushMarketDataBinance
             System.Console.ReadLine();
         }
 
-      
+        static void GetAppSettingsFile()
+        {
+            var builder = new ConfigurationBuilder()
+                                 .SetBasePath(Directory.GetCurrentDirectory())
+                                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            _iconfiguration = builder.Build();
+        }
+        static void PrintCountries()
+        {
+            var countryDAL = new CountryDAL(_iconfiguration);
+            var listCountryModel = countryDAL.GetList();
+            listCountryModel.ForEach(item =>
+            {
+                Console.WriteLine(item.Country);
+            });
+            Console.WriteLine("Press any key to stop.");
+            Console.ReadKey();
+        }
+
         private static async Task TestConnection(IBinanceRestClient binanceRestClient)
         {
             Logger.Info("Testing connection...");
