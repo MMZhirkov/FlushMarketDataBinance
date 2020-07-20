@@ -1,15 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using BinanceExchange.API.Client;
 using BinanceExchange.API.Models.Response;
 using BinanceExchange.API.Websockets;
+using FlushMarketDataBinance.DAL;
 using FlushMarketDataBinance.Market;
 using FlushMarketDataBinance.Model;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
-
 
 namespace FlushMarketDataBinance
 {
@@ -20,12 +20,10 @@ namespace FlushMarketDataBinance
 
         public static async Task Main(string[] args)
         {
-
-            GetAppSettingsFile();
-            PrintCountries();
-
             const string token = "LINKBTC";
             Logger.Info($"start, {token}");
+
+            GetAppSettingsFile();
 
             IBinanceRestClient binanceRestClient = new BinanceRestClient(new BinanceClientConfiguration
             {
@@ -39,26 +37,33 @@ namespace FlushMarketDataBinance
             System.Console.Clear();
 
             var lastUpdateTime = default(long);
+            var slices = new List<Slice>();
+            var maxSizeList = 0;
 
             marketDepth.MarketDepthChanged += (sender, e) =>
             {
-                int n = 100;
+                int n = 300;
                 System.Console.WriteLine("Price : Volume");
                
                 if (lastUpdateTime != e.UpdateTime)
                 {
-                    Logger.Info($" time = {e.UpdateTime}");
+                    Logger.Info($"time = {e.UpdateTime}");
                     try
                     {
-                        System.Console.WriteLine(
-                        JsonConvert.SerializeObject(
-                           new
-                           {
-                               LastUpdate = e.UpdateTime,
-                               Asks = e.Asks.Take(n).Reverse().Select(s => $"{s.Price} : {s.Volume}"),
-                               Bids = e.Bids.Take(n).Select(s => $"{s.Price} : {s.Volume}")
-                           },
-                           Formatting.Indented));
+                        slices.Add(new Slice(
+                            e.UpdateTime,
+                            string.Join(" // ", e.Bids.Take(n).Select(s => $"{Math.Round(s.Price)} {Math.Round(s.Volume)}")),
+                            string.Join(" // ", e.Asks.Take(n).Reverse().Select(s => $"{Math.Round(s.Price)} {Math.Round(s.Volume)}"))
+                            ));
+
+                        maxSizeList++;
+
+                        if (maxSizeList > 5)
+                        {
+                            RecordSlices(slices);
+                            maxSizeList = 0;
+                            slices.Clear();
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -81,23 +86,18 @@ namespace FlushMarketDataBinance
             System.Console.ReadLine();
         }
 
+        static void RecordSlices(List<Slice> slices)
+        {
+            var sliceDAL = new SliceDAL(_iconfiguration);
+            sliceDAL.AddSlice(slices);
+        }
+
         static void GetAppSettingsFile()
         {
             var builder = new ConfigurationBuilder()
                                  .SetBasePath(Directory.GetCurrentDirectory())
                                  .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
             _iconfiguration = builder.Build();
-        }
-        static void PrintCountries()
-        {
-            var countryDAL = new CountryDAL(_iconfiguration);
-            var listCountryModel = countryDAL.GetList();
-            listCountryModel.ForEach(item =>
-            {
-                Console.WriteLine(item.Country);
-            });
-            Console.WriteLine("Press any key to stop.");
-            Console.ReadKey();
         }
 
         private static async Task TestConnection(IBinanceRestClient binanceRestClient)
