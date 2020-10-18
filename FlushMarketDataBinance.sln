@@ -5,7 +5,11 @@ VisualStudioVersion = 16.0.29519.87
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlushMarketDataBinance", "FlushMarketDataBinance\FlushMarketDataBinance.csproj", "{7AD561F8-72A7-483B-9516-7B156F5C813F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinanceDotNet.BinanceExchange.API", "BinanceDotNet.BinanceExchange.API\BinanceDotNet.BinanceExchange.API.csproj", "{040FBD60-53D0-439A-854B-866F89D9B0D2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Binance.API.Csharp.Client.Models", "Binance.API.Csharp.Client.Models\Binance.API.Csharp.Client.Models.csproj", "{7CF40EB8-D81D-40B5-B849-17E5662175D6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Binance.API.Csharp.Client", "Binance.API.Csharp.Client\Binance.API.Csharp.Client.csproj", "{EC2A020E-338A-46EE-9D08-C158CBD49C92}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Binance.API.Csharp.Client.Domain", "Binance.API.Csharp.Client.Domain\Binance.API.Csharp.Client.Domain.csproj", "{E255F763-A2FE-43A8-9331-019796C935C7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +21,18 @@ Global
 		{7AD561F8-72A7-483B-9516-7B156F5C813F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AD561F8-72A7-483B-9516-7B156F5C813F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7AD561F8-72A7-483B-9516-7B156F5C813F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{040FBD60-53D0-439A-854B-866F89D9B0D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{040FBD60-53D0-439A-854B-866F89D9B0D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{040FBD60-53D0-439A-854B-866F89D9B0D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{040FBD60-53D0-439A-854B-866F89D9B0D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CF40EB8-D81D-40B5-B849-17E5662175D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CF40EB8-D81D-40B5-B849-17E5662175D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CF40EB8-D81D-40B5-B849-17E5662175D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CF40EB8-D81D-40B5-B849-17E5662175D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC2A020E-338A-46EE-9D08-C158CBD49C92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC2A020E-338A-46EE-9D08-C158CBD49C92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC2A020E-338A-46EE-9D08-C158CBD49C92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC2A020E-338A-46EE-9D08-C158CBD49C92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E255F763-A2FE-43A8-9331-019796C935C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E255F763-A2FE-43A8-9331-019796C935C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E255F763-A2FE-43A8-9331-019796C935C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E255F763-A2FE-43A8-9331-019796C935C7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
