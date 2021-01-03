@@ -1,6 +1,6 @@
 ﻿using NLog;
 
-namespace FlushMarketDataConsole
+namespace FlushMarketDataBinanceConsole
 {
     public class Log
     {

@@ -6,11 +6,6 @@ using System;
 using BinanceExchange.API;
 using BinanceExchange.API.Client;
 using BinanceExchange.API.Client.Interfaces;
-using BinanceExchange.API.Enums;
-using BinanceExchange.API.Market;
-using BinanceExchange.API.Models.Request;
-using BinanceExchange.API.Models.Response;
-using BinanceExchange.API.Models.Response.Error;
 using BinanceExchange.API.Models.WebSocket;
 using BinanceExchange.API.Utility;
 using BinanceExchange.API.Websockets;
@@ -18,20 +13,34 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using FlushMarketDataConsole.Model;
 using System.Linq;
+using FlushMarketDataBinanceConsole.Model;
+using System.IO;
+using Microsoft.EntityFrameworkCore;
 
-namespace FlushMarketDataConsole
+namespace FlushMarketDataBinanceConsole
 {
-    public class Program
+    class Program
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public static async Task Main(string[] args)
         {
+            var builder = new ConfigurationBuilder();
+            // установка пути к текущему каталогу
+            builder.SetBasePath(Directory.GetCurrentDirectory());
+            // получаем конфигурацию из файла appsettings.json
+            builder.AddJsonFile("appsettings.json");
+            // создаем конфигурацию
+            var config = builder.Build();
+            string connectionString = config.GetConnectionString("DefaultConnection");
 
+            var optionsBuilder = new DbContextOptionsBuilder<Context.OrderBookContext>();
+            var options = optionsBuilder
+                .UseSqlServer(connectionString)
+                .Options;
 
-            using (ApplicationContext db = new ApplicationContext())
+            using (Context.OrderBookContext db = new Context.OrderBookContext(options))
             {
                 // создаем два объекта User
                 OrderBook user1 = new OrderBook { Bids = "Tom", Asks = 33 };
@@ -65,7 +74,7 @@ namespace FlushMarketDataConsole
             });
 
             var depthResults = await client.GetOrderBook("BNBBTC", true, 1000);
-            
+
             logger.Info("End FlushMarket");
         }
 
