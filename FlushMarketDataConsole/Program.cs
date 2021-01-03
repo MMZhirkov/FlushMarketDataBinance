@@ -38,7 +38,7 @@ namespace FlushMarketDataConsole
                 SecretKey = secretKey
             });
 
-            var depthResults = await client.GetOrderBook("BNBBTC", true, 100);
+            var depthResults = await client.GetOrderBook("BNBBTC", true, 1000);
             
             logger.Info("End FlushMarket");
         }
