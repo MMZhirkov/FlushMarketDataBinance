@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.29519.87
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinanceExchange.API", "BinanceExchange.API\BinanceExchange.API.csproj", "{ADAD1962-7C85-4264-A2AE-3515C33C8D4B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlushMarketDataBinanceConsole", "FlushMarketDataBinanceConsole\FlushMarketDataBinanceConsole.csproj", "{B17CB42B-11AC-4DA5-946C-239C96DEAEB8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlushMarketDataBinanceConsole", "FlushMarketDataBinanceConsole\FlushMarketDataBinanceConsole.csproj", "{B17CB42B-11AC-4DA5-946C-239C96DEAEB8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataModel", "DataModel\DataModel.csproj", "{5E8197E1-ADB5-42B9-BE1A-87826144A423}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{B17CB42B-11AC-4DA5-946C-239C96DEAEB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B17CB42B-11AC-4DA5-946C-239C96DEAEB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B17CB42B-11AC-4DA5-946C-239C96DEAEB8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E8197E1-ADB5-42B9-BE1A-87826144A423}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E8197E1-ADB5-42B9-BE1A-87826144A423}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E8197E1-ADB5-42B9-BE1A-87826144A423}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E8197E1-ADB5-42B9-BE1A-87826144A423}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

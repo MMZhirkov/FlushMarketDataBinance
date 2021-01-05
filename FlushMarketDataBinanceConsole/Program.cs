@@ -20,15 +20,12 @@ using Microsoft.EntityFrameworkCore;
 using FlushMarketDataBinanceConsole.Context;
 using System.Reflection;
 using BinanceExchange.API.Models.Response;
+using DataModel;
 
 namespace FlushMarketDataBinanceConsole
 {
     class Program
     {
-        private static string apiKey;
-        private static string secretKey;
-        private static string connectionString;
-        private static string strSymbols;
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public static async Task Main(string[] args)
@@ -36,7 +33,7 @@ namespace FlushMarketDataBinanceConsole
             logger.Info("Start FlushMarket");
 
             InitConfig();
-            if (string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(secretKey) || string.IsNullOrEmpty(strSymbols))
+            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey) || string.IsNullOrEmpty(Settings.StrSymbols))
                 return;
 
             var options = GetOptionsDBContext();
@@ -46,12 +43,12 @@ namespace FlushMarketDataBinanceConsole
                 return;
             }
 
-            var symbols = strSymbols.Replace(" ", string.Empty).Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var symbols = Settings.StrSymbols.Replace(" ", string.Empty).Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             
             var client = new BinanceClient(new ClientConfiguration()
             {
-                ApiKey = apiKey,
-                SecretKey = secretKey
+                ApiKey = Settings.ApiKey,
+                SecretKey = Settings.SecretKey
             });
 
             var orderBooks = new List<OrderBookResponse>();
@@ -102,10 +99,10 @@ namespace FlushMarketDataBinanceConsole
             builder.AddJsonFile("appsettings.json");
 
             var config = builder.Build();
-            connectionString = config.GetConnectionString("DefaultConnection");
-            apiKey = config.GetSection("BinanceApi:apiKey")?.Value;
-            secretKey = config.GetSection("BinanceApi:secretKey")?.Value;
-            strSymbols = config.GetSection("BinanceApi:symbols")?.Value;
+            Settings.ConnectionString = config.GetConnectionString("DefaultConnection");
+            Settings.ApiKey = config.GetSection("BinanceApi:apiKey")?.Value;
+            Settings.SecretKey = config.GetSection("BinanceApi:secretKey")?.Value;
+            Settings.StrSymbols = config.GetSection("BinanceApi:symbols")?.Value;
 
             logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
         }
@@ -115,7 +112,7 @@ namespace FlushMarketDataBinanceConsole
             logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
             
             var options = new DbContextOptionsBuilder<Context.OrderBookContext>()
-                .UseSqlServer(connectionString)
+                .UseSqlServer(Settings.ConnectionString)
                 .Options;
 
             logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");

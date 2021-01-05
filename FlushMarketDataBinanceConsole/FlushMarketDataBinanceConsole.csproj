@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BinanceExchange.API\BinanceExchange.API.csproj" />
+    <ProjectReference Include="..\DataModel\DataModel.csproj" />
   </ItemGroup>
 
   <ItemGroup>
