@@ -1,20 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using NLog;
 using System;
-using BinanceExchange.API;
 using BinanceExchange.API.Client;
-using BinanceExchange.API.Client.Interfaces;
-using BinanceExchange.API.Models.WebSocket;
-using BinanceExchange.API.Utility;
-using BinanceExchange.API.Websockets;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Newtonsoft.Json;
-using System.Linq;
-using FlushMarketDataBinanceConsole.Model;
 using System.IO;
 using Microsoft.EntityFrameworkCore;
 using FlushMarketDataBinanceConsole.Context;
@@ -33,7 +22,8 @@ namespace FlushMarketDataBinanceConsole
             logger.Info("Start FlushMarket");
 
             InitConfig();
-            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey) || string.IsNullOrEmpty(Settings.StrSymbols))
+
+            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey))
                 return;
 
             var options = GetOptionsDBContext();
@@ -42,8 +32,6 @@ namespace FlushMarketDataBinanceConsole
                 logger.Info("options null");
                 return;
             }
-
-            var symbols = Settings.StrSymbols.Replace(" ", string.Empty).Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             
             var client = new BinanceClient(new ClientConfiguration()
             {
@@ -51,40 +39,14 @@ namespace FlushMarketDataBinanceConsole
                 SecretKey = Settings.SecretKey
             });
 
-            var orderBooks = new List<OrderBookResponse>();
-
-            foreach (var symbol in symbols)
+            using (var helper = new Helper()) 
             {
-                try
-                {
-                    orderBooks.Add(await client.GetOrderBook(symbol, true, 1000));
-                }
-                catch (Exception ex)
-                {
-                    logger.Info($"err, {ex.Message}");
-                    throw;
-                }
-            }
+                var orderBooks = new List<OrderBookResponse>();
 
-            using (var db = new OrderBookContext(options))
-            {
-                // создаем два объекта User
-                OrderBook user1 = new OrderBook { Bids = "Tom", Asks = 33 };
-                OrderBook user2 = new OrderBook { Bids = "Alice", Asks = 26 };
+                helper.GetOrderBooks(client, orderBooks);
+                helper.RecordOrderBooksInDB(options, orderBooks);
 
-                // добавляем их в бд
-                db.OrderBooks.Add(user1);
-                db.OrderBooks.Add(user2);
-                db.SaveChanges();
-                Console.WriteLine("Объекты успешно сохранены");
-
-                // получаем объекты из бд и выводим на консоль
-                var users = db.OrderBooks.ToList();
-                Console.WriteLine("Список объектов:");
-                foreach (OrderBook u in users)
-                {
-                    Console.WriteLine($"{u.Id}.{u.Bids} - {u.Asks}");
-                }
+                orderBooks.Clear();
             }
 
             logger.Info("End FlushMarket");
@@ -102,7 +64,7 @@ namespace FlushMarketDataBinanceConsole
             Settings.ConnectionString = config.GetConnectionString("DefaultConnection");
             Settings.ApiKey = config.GetSection("BinanceApi:apiKey")?.Value;
             Settings.SecretKey = config.GetSection("BinanceApi:secretKey")?.Value;
-            Settings.StrSymbols = config.GetSection("BinanceApi:symbols")?.Value;
+            Settings.Symbols = config.GetSection("BinanceApi:symbols")?.Value?.ToUpper()?.Replace(" ", string.Empty)?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
         }
@@ -118,17 +80,6 @@ namespace FlushMarketDataBinanceConsole
             logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
 
             return options;
-        }
-
-        private static async Task<Dictionary<string, DepthCacheObject>> BuildLocalDepthCache(IBinanceClient client)
-        {
-            logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
-
-            var depthResults = await client.GetOrderBook("BNBBTC", true, 1000);
-
-            logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
-
-            return new Dictionary<string, DepthCacheObject>();
         }
     }
 }
