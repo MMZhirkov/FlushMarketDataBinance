@@ -10,6 +10,10 @@ using FlushMarketDataBinanceConsole.Context;
 using System.Reflection;
 using BinanceExchange.API.Models.Response;
 using DataModel;
+using System.Linq;
+using System.Timers;
+using System.Threading;
+//using System.Threading;
 
 namespace FlushMarketDataBinanceConsole
 {
@@ -38,18 +42,39 @@ namespace FlushMarketDataBinanceConsole
                 ApiKey = Settings.ApiKey,
                 SecretKey = Settings.SecretKey
             });
+            var orderBooks = new Dictionary<string, OrderBookResponse>();
 
-            using (var helper = new Helper()) 
+            while (true)
             {
-                var orderBooks = new List<OrderBookResponse>();
+                using (var helper = new Helper())
+                {
+                    await helper.GetOrderBooks(client, orderBooks);
 
-                helper.GetOrderBooks(client, orderBooks);
-                helper.RecordOrderBooksInDB(options, orderBooks);
+                    if (!orderBooks.Any())
+                        continue;
 
-                orderBooks.Clear();
+                    helper.RecordOrderBooksInDB(options, orderBooks);
+                    orderBooks.Clear();
+                }
+
+                Thread.Sleep(700);
             }
 
+            Console.WriteLine(DateTime.Now);
+            
+            
+
             logger.Info("End FlushMarket");
+        }
+
+        private static void OnTimeout(Object source, ElapsedEventArgs e)
+        {
+            Console.WriteLine("Timer expired");
+        }
+
+        public static void OnTimeout(object obj)
+        {
+           
         }
 
         private static void InitConfig()

@@ -20,34 +20,37 @@ namespace FlushMarketDataBinanceConsole
             GC.SuppressFinalize(this);
         }
 
-        public async Task GetOrderBooks(BinanceClient client, List<OrderBookResponse> orderBooks)
+        public async Task GetOrderBooks(BinanceClient client, Dictionary<string, OrderBookResponse> orderBooks)
         {
             foreach (var symbol in Settings.Symbols)
             {
                 try
                 {
-                    orderBooks.Add(await client.GetOrderBook(symbol, true, 1000));
+                    orderBooks.Add(symbol, await client.GetOrderBook(symbol, true, 1000));
                 }
                 catch (Exception ex)
                 {
-                    logger.Info($"err, {ex.Message}");
+                    logger.Info($"err, symbol = {symbol}, {ex.Message}");
                 }
             }
         }
 
-        public void RecordOrderBooksInDB(DbContextOptions<OrderBookContext> options, List<OrderBookResponse> orderBooks)
+        public void RecordOrderBooksInDB(DbContextOptions<OrderBookContext> options, Dictionary<string, OrderBookResponse> orderBooks)
         {
             using (var db = new OrderBookContext(options))
             {
                 var now = DateTime.Now;
 
-                orderBooks.ForEach(orderBook => db.OrderBooks.Add(
-                    new OrderBook
+                foreach (var orderBook in orderBooks)
+                {
+                    db.OrderBooks.Add(new OrderBook
                     {
-                        Trades = orderBook.Bids.Select(b => new Trade { Price = b.Price, Quantity = b.Quantity, Bid = true })
-                         .Concat(orderBook.Asks.Select(a => new Trade { Price = a.Price, Quantity = a.Quantity, Ask = true })).ToList(),
+                         Symbol = orderBook.Key.ToString(),
+                         Trades = orderBook.Value.Bids.Select(b => new Trade { Price = b.Price, Quantity = b.Quantity, Bid = true })
+                         .Concat(orderBook.Value.Asks.Select(a => new Trade { Price = a.Price, Quantity = a.Quantity, Ask = true })).ToList(),
                         TimeTrade = now
-                    }));
+                    }) ;
+                }
 
                 db.SaveChanges();
             }
