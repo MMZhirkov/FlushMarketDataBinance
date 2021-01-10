@@ -89,7 +89,7 @@ namespace BinanceExchange.API
 
         public static class MarketData
         {
-            internal static string ApiVersion = "v1";
+            internal static string ApiVersion = "v3";
 
             /// <summary>
             /// Gets the order book with all bids and asks

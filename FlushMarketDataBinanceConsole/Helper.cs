@@ -29,7 +29,7 @@ namespace FlushMarketDataBinanceConsole
             {
                 try
                 {
-                    orderBooks.Add(symbol, await client.GetOrderBook(symbol, true, 1000));
+                    orderBooks.Add(symbol, await client.GetOrderBook(symbol, false, 500));
                 }
                 catch (Exception ex)
                 {

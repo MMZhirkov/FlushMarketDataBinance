@@ -1,10 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
-using NLog;
+﻿using NLog;
 using System;
 using BinanceExchange.API.Client;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.IO;
 using Microsoft.EntityFrameworkCore;
 using FlushMarketDataBinanceConsole.Context;
 using System.Reflection;
@@ -59,7 +57,7 @@ namespace FlushMarketDataBinanceConsole
                     orderBooks.Clear();
                 }
 
-                Thread.Sleep(700);
+                Thread.Sleep(1700);
                 Console.WriteLine(DateTime.Now);
             }
 
