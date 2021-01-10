@@ -11,7 +11,6 @@ using System.Reflection;
 using BinanceExchange.API.Models.Response;
 using DataModel;
 using System.Linq;
-using System.Timers;
 using System.Threading;
 
 namespace FlushMarketDataBinanceConsole
@@ -22,9 +21,9 @@ namespace FlushMarketDataBinanceConsole
 
         public static async Task Main(string[] args)
         {
-            logger.Info("Start FlushMarket");
+            logger.Info($"Запущен {MethodBase.GetCurrentMethod()}");
 
-            InitConfig();
+            Settings.InitConfig();
 
             if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey))
                 return;
@@ -42,55 +41,29 @@ namespace FlushMarketDataBinanceConsole
                 SecretKey = Settings.SecretKey
             });
             var orderBooks = new Dictionary<string, OrderBookResponse>();
+            var today = DateTime.Today; 
 
-            while (true)
+            while (DateTime.Now < new DateTime(today.Year, today.Month, today.Day, 23, 58, 00))
             {
                 using (var helper = new Helper())
                 {
                     await helper.GetOrderBooks(client, orderBooks);
 
                     if (!orderBooks.Any())
+                    {
+                        logger.Info($"{nameof(orderBooks)} пустой");
                         continue;
+                    }
 
                     helper.RecordOrderBooksInDB(options, orderBooks);
                     orderBooks.Clear();
                 }
 
                 Thread.Sleep(700);
+                Console.WriteLine(DateTime.Now);
             }
 
-            Console.WriteLine(DateTime.Now);
-            
-            
-
-            logger.Info("End FlushMarket");
-        }
-
-        private static void OnTimeout(Object source, ElapsedEventArgs e)
-        {
-            Console.WriteLine("Timer expired");
-        }
-
-        public static void OnTimeout(object obj)
-        {
-           
-        }
-
-        private static void InitConfig()
-        {
-            logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
-
-            var builder = new ConfigurationBuilder();
-            builder.SetBasePath(Directory.GetCurrentDirectory());
-            builder.AddJsonFile("appsettings.json");
-
-            var config = builder.Build();
-            Settings.ConnectionString = config.GetConnectionString("DefaultConnection");
-            Settings.ApiKey = config.GetSection("BinanceApi:apiKey")?.Value;
-            Settings.SecretKey = config.GetSection("BinanceApi:secretKey")?.Value;
-            Settings.Symbols = config.GetSection("BinanceApi:symbols")?.Value?.ToUpper()?.Replace(" ", string.Empty)?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-            logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
+            logger.Info($"{MethodBase.GetCurrentMethod()} отработал");
         }
 
         private static DbContextOptions<OrderBookContext> GetOptionsDBContext()

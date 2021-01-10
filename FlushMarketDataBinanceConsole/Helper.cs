@@ -7,6 +7,7 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace FlushMarketDataBinanceConsole
@@ -30,7 +31,7 @@ namespace FlushMarketDataBinanceConsole
                 }
                 catch (Exception ex)
                 {
-                    logger.Info($"err, symbol = {symbol}, {ex.Message}");
+                    logger.Error($"err, symbol = {symbol}, {ex.Message}");
                 }
             }
         }
@@ -40,16 +41,28 @@ namespace FlushMarketDataBinanceConsole
             using (var db = new OrderBookContext(options))
             {
                 var now = DateTime.Now;
-
-                foreach (var orderBook in orderBooks)
+                var listOrderBooksForRecord = orderBooks.Select(o => new OrderBook 
                 {
-                    db.OrderBooks.Add(new OrderBook
-                    {
-                         Symbol = orderBook.Key.ToString(),
-                         Trades = orderBook.Value.Bids.Select(b => new Trade { Price = b.Price, Quantity = b.Quantity, Bid = true })
-                         .Concat(orderBook.Value.Asks.Select(a => new Trade { Price = a.Price, Quantity = a.Quantity, Ask = true })).ToList(),
-                        TimeTrade = now
-                    }) ;
+                    Symbol = o.Key.ToString(),
+                    Trades = o.Value.Bids.Select(b => new Trade { Price = b.Price, Quantity = b.Quantity, Bid = true })
+                         .Concat(o.Value.Asks.Select(a => new Trade { Price = a.Price, Quantity = a.Quantity, Ask = true })).ToList(),
+                    TimeTrade = now
+                });
+                var transaction = db.Database.BeginTransaction();
+
+                try
+                {
+                    db.OrderBooks.AddRange(listOrderBooksForRecord);
+                    db.SaveChanges();
+
+                    transaction.Commit();
+
+                    logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
+                }
+                catch(Exception ex)
+                {
+                    logger.Error($"err, при записи OrderBook в бд возникла ошибка: {ex.Message}");
+                    transaction.Rollback();
                 }
 
                 db.SaveChanges();

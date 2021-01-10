@@ -13,5 +13,10 @@ namespace FlushMarketDataBinanceConsole.Context
            
             Database.EnsureCreated();
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<OrderBook>().ToTable("OrderBooks");
+        }
     }
 }
