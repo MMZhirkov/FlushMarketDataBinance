@@ -6,10 +6,10 @@ namespace DataModel
 {
     public static class Settings
     {
-        public static string ApiKey { get; set; }
-        public static string SecretKey { get; set; }
-        public static string ConnectionString { get; set; }
-        public static string[] Symbols { get; set; }
+        public static string ApiKey { get; private set; }
+        public static string SecretKey { get; private set; }
+        public static string ConnectionString { get; private set; }
+        public static string[] Symbols { get; private set; }
 
         public static void InitConfig()
         {

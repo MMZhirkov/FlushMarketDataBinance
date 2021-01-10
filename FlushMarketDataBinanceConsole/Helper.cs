@@ -23,6 +23,8 @@ namespace FlushMarketDataBinanceConsole
 
         public async Task GetOrderBooks(BinanceClient client, Dictionary<string, OrderBookResponse> orderBooks)
         {
+            logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
+
             foreach (var symbol in Settings.Symbols)
             {
                 try
@@ -34,10 +36,14 @@ namespace FlushMarketDataBinanceConsole
                     logger.Error($"err, symbol = {symbol}, {ex.Message}");
                 }
             }
+
+            logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
         }
 
         public void RecordOrderBooksInDB(DbContextOptions<OrderBookContext> options, Dictionary<string, OrderBookResponse> orderBooks)
         {
+            logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
+
             using (var db = new OrderBookContext(options))
             {
                 var now = DateTime.Now;
@@ -64,8 +70,6 @@ namespace FlushMarketDataBinanceConsole
                     logger.Error($"err, при записи OrderBook в бд возникла ошибка: {ex.Message}");
                     transaction.Rollback();
                 }
-
-                db.SaveChanges();
             }
         }
     }
