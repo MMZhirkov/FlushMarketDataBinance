@@ -13,7 +13,6 @@ using DataModel;
 using System.Linq;
 using System.Timers;
 using System.Threading;
-//using System.Threading;
 
 namespace FlushMarketDataBinanceConsole
 {
