@@ -21,7 +21,7 @@ namespace FlushMarketDataBinanceConsole
             GC.SuppressFinalize(this);
         }
 
-        public async Task GetOrderBooks(BinanceClient client, Dictionary<string, OrderBookResponse> orderBooks)
+        public async Task FillListOrderBooks(BinanceClient client, Dictionary<string, OrderBookResponse> orderBooks)
         {
             logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
 

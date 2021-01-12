@@ -1,15 +1,12 @@
 ﻿using NLog;
 using System;
 using BinanceExchange.API.Client;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using FlushMarketDataBinanceConsole.Context;
 using System.Reflection;
-using BinanceExchange.API.Models.Response;
 using DataModel;
-using System.Linq;
-using System.Threading;
+using Quartz;
+using Quartz.Impl;
 
 namespace FlushMarketDataBinanceConsole
 {
@@ -17,14 +14,11 @@ namespace FlushMarketDataBinanceConsole
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
             logger.Info($"Запущен {MethodBase.GetCurrentMethod()}");
 
             Settings.InitConfig();
-
-            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey))
-                return;
 
             var options = GetOptionsDBContext();
             if (options == null)
@@ -38,28 +32,8 @@ namespace FlushMarketDataBinanceConsole
                 ApiKey = Settings.ApiKey,
                 SecretKey = Settings.SecretKey
             });
-            var orderBooks = new Dictionary<string, OrderBookResponse>();
-            var today = DateTime.Today; 
 
-            while (DateTime.Now < new DateTime(today.Year, today.Month, today.Day, 23, 58, 00))
-            {
-                using (var helper = new Helper())
-                {
-                    await helper.GetOrderBooks(client, orderBooks);
-
-                    if (!orderBooks.Any())
-                    {
-                        logger.Info($"{nameof(orderBooks)} пустой");
-                        continue;
-                    }
-
-                    helper.RecordOrderBooksInDB(options, orderBooks);
-                    orderBooks.Clear();
-                }
-
-                Thread.Sleep(1700);
-                Console.WriteLine(DateTime.Now);
-            }
+            InitSheduller(options, client);
 
             logger.Info($"{MethodBase.GetCurrentMethod()} отработал");
         }
@@ -75,6 +49,39 @@ namespace FlushMarketDataBinanceConsole
             logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
 
             return options;
+        }
+
+        private async static void InitSheduller(DbContextOptions<OrderBookContext> options, BinanceClient client)
+        {
+            logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
+
+            var factory = new StdSchedulerFactory();
+            var scheduler = await factory.GetScheduler();
+            var jobData = new JobDataMap();
+            jobData.Put("client", client);
+            jobData.Put("options", options);
+
+            var job = JobBuilder.Create<FlushMarketData>()
+                .WithIdentity("job1", "group1")
+                .SetJobData(jobData)
+                .Build();
+
+            var trigger = TriggerBuilder.Create()
+                .WithIdentity("trigger1", "group1")
+                .StartNow()
+                .WithSimpleSchedule(x => x
+                    .RepeatForever())
+                    .WithCronSchedule(Settings.CronExpression)
+                .Build();
+
+            await scheduler.ScheduleJob(job, trigger);
+            await scheduler.Start();
+
+            Console.ReadKey();
+
+            await scheduler.Shutdown();
+
+            logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
         }
     }
 }
