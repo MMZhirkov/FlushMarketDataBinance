@@ -19,8 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BinanceExchange.API\BinanceExchange.API.csproj" />
-    <ProjectReference Include="..\DataModel\DataModel.csproj" />
+    <ProjectReference Include="..\FlushMarketDataBinanceApi\FlushMarketDataBinanceApi.csproj" />
+    <ProjectReference Include="..\FlushMarketDataBinanceModel\FlushMarketDataBinanceModel.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,12 +1,12 @@
 ﻿using NLog;
 using System;
-using BinanceExchange.API.Client;
 using Microsoft.EntityFrameworkCore;
-using FlushMarketDataBinanceConsole.Context;
 using System.Reflection;
-using DataModel;
 using Quartz;
 using Quartz.Impl;
+using FlushMarketDataBinanceModel;
+using FlushMarketDataBinanceApi.Client;
+using FlushMarketDataBinanceConsole.Context;
 
 namespace FlushMarketDataBinanceConsole
 {

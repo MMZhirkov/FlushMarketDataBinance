@@ -1,4 +1,4 @@
-﻿using DataModel;
+﻿using FlushMarketDataBinanceModel;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlushMarketDataBinanceConsole.Context
@@ -10,7 +10,6 @@ namespace FlushMarketDataBinanceConsole.Context
         public OrderBookContext(DbContextOptions<OrderBookContext> options)
           : base(options)
         {
-           
             Database.EnsureCreated();
         }
 

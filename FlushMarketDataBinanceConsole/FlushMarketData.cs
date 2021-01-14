@@ -1,5 +1,5 @@
-﻿using BinanceExchange.API.Client;
-using BinanceExchange.API.Models.Response;
+﻿using FlushMarketDataBinanceApi.ApiModels.Response;
+using FlushMarketDataBinanceApi.Client;
 using FlushMarketDataBinanceConsole.Context;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
@@ -30,7 +30,7 @@ namespace FlushMarketDataBinanceConsole
                 helper.RecordOrderBooksInDB(options, orderBooks);
             }
 
-            Console.Out.WriteLineAsync($"Task done, {DateTime.Now}");
+            Console.WriteLine($"Task done, {DateTime.Now}");
 		}
 	}
 }

@@ -1,7 +1,7 @@
-﻿using BinanceExchange.API.Client;
-using BinanceExchange.API.Models.Response;
-using DataModel;
+﻿using FlushMarketDataBinanceApi.ApiModels.Response;
+using FlushMarketDataBinanceApi.Client;
 using FlushMarketDataBinanceConsole.Context;
+using FlushMarketDataBinanceModel;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using System;
@@ -40,7 +40,7 @@ namespace FlushMarketDataBinanceConsole
             logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
         }
 
-        public void RecordOrderBooksInDB(DbContextOptions<OrderBookContext> options, Dictionary<string, OrderBookResponse> orderBooks)
+        public  void RecordOrderBooksInDB(DbContextOptions<OrderBookContext> options, Dictionary<string, OrderBookResponse> orderBooks)
         {
             logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
 
