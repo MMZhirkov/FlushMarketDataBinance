@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 
 namespace FlushMarketDataBinanceModel.SettingsApp
@@ -17,8 +17,9 @@ namespace FlushMarketDataBinanceModel.SettingsApp
         /// <summary>
         /// url hidemy.name для парсинга нужных прокси по фильтру
         /// </summary>
-        public static string UrlProxy { get; private set; }
-        public static List<Proxy> ProxyList { get;  set; } = new List<Proxy>();
+        public static string UrlProxyHidemy { get; private set; }
+        public static string UrlProxyScrape { get; private set; }
+        public static ConcurrentDictionary<string, Proxy> ProxyList { get;  set; } = new ConcurrentDictionary<string, Proxy>();
 
         /// <summary>
         /// Наименования пар
@@ -37,9 +38,10 @@ namespace FlushMarketDataBinanceModel.SettingsApp
             Settings.SecretKey = config.GetSection("BinanceApi:secretKey")?.Value;
             Settings.CronExpression = config.GetSection("Cron:cronExpression")?.Value;
             Settings.Symbols = config.GetSection("BinanceApi:symbols")?.Value?.ToUpper()?.Replace(" ", string.Empty)?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-            Settings.UrlProxy = config.GetSection("Proxy:urlProxy")?.Value;
+            Settings.UrlProxyHidemy = config.GetSection("Proxy:urlProxyHidemy")?.Value;
+            Settings.UrlProxyScrape = config.GetSection("Proxy:urlProxyScrape")?.Value;
 
-            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey) || string.IsNullOrEmpty(Settings.CronExpression) || string.IsNullOrEmpty(Settings.UrlProxy))
+            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey) || string.IsNullOrEmpty(Settings.CronExpression) || string.IsNullOrEmpty(Settings.UrlProxyHidemy) || string.IsNullOrEmpty(Settings.UrlProxyScrape))
                 throw new Exception("Заполните обязательные параметры в конфиге");
         }
     }

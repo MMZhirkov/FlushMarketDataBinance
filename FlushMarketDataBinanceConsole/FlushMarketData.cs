@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace FlushMarketDataBinanceConsole
@@ -17,11 +18,9 @@ namespace FlushMarketDataBinanceConsole
 		{
             using (var helper = new Helper())
             {
-                //var dataMap = context.MergedJobDataMap;
-                //var options = (DbContextOptions<OrderBookContext>)dataMap["options"];
-                Settings.ProxyList = Settings.ProxyList.OrderBy(p => p.LastUseTime).ToList();
-                var lastUsedProxy = Settings.ProxyList[0];
-                Settings.ProxyList[0].LastUseTime = DateTime.Now;
+                var firstTimePair = Settings.ProxyList.OrderBy(s => s.Value.LastUseTime).FirstOrDefault();
+                firstTimePair.Value.LastUseTime = DateTime.Now;
+
                 var binanceClient = new BinanceClient(new ClientConfiguration()
                 {
                     ApiKey = Settings.ApiKey,
@@ -32,15 +31,21 @@ namespace FlushMarketDataBinanceConsole
                 {
                     AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip,
                     UseProxy = true,
-                    Proxy = helper.GetProxy(lastUsedProxy)
+                    Proxy = new WebProxy(firstTimePair.Value.UriProxy)
                 };
 
-                var httpClient = new HttpClient();//httpClientHandler
-                //httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var httpClient = new HttpClient(httpClientHandler);
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                try
+                {
+                    var testResponse = await httpClient.GetStringAsync($"https://api.binance.com/api/v3/depth?symbol=ETHUSDT&limit=500");
+                }
+                catch (Exception ex)
+                {
 
-                var n = await httpClient.GetStringAsync($"https://www.google.ru/");
-
-                //var n = await httpClient.GetStringAsync($"https://api.binance.com/api/v3/depth?symbol=ETHUSDT&limit=500");
+                    throw;
+                }
+               
 
                 var orderBooks = new Dictionary<string, OrderBookResponse>();
 
