@@ -1,12 +1,17 @@
 ﻿using FlushMarketDataBinanceApi.ApiModels.Response;
 using FlushMarketDataBinanceApi.Client;
-using FlushMarketDataBinanceConsole.Context;
 using FlushMarketDataBinanceModel;
+using FlushMarketDataBinanceModel.DAL;
+using FlushMarketDataBinanceModel.DB;
+using FlushMarketDataBinanceModel.SettingsApp;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -21,7 +26,7 @@ namespace FlushMarketDataBinanceConsole
             GC.SuppressFinalize(this);
         }
 
-        public async Task FillListOrderBooks(BinanceClient client, Dictionary<string, OrderBookResponse> orderBooks)
+        public async Task FillListOrderBooks(BinanceClient client, Dictionary<string, OrderBookResponse> orderBooks, HttpClient httpClient)
         {
             logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
 
@@ -29,7 +34,7 @@ namespace FlushMarketDataBinanceConsole
             {
                 try
                 {
-                    orderBooks.Add(symbol, await client.GetOrderBook(symbol, false, 500));
+                    orderBooks.Add(symbol, await client.GetOrderBook(httpClient, symbol, 500));
                 }
                 catch (Exception ex)
                 {
@@ -40,11 +45,11 @@ namespace FlushMarketDataBinanceConsole
             logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
         }
 
-        public  void RecordOrderBooksInDB(DbContextOptions<OrderBookContext> options, Dictionary<string, OrderBookResponse> orderBooks)
+        public  void RecordOrderBooksInDB(Dictionary<string, OrderBookResponse> orderBooks)
         {
             logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
 
-            using (var db = new OrderBookContext(options))
+            using (var db = new OrderBookContext())
             {
                 var now = DateTime.Now;
                 var listOrderBooksForRecord = orderBooks.Select(o => new OrderBook 
@@ -71,6 +76,14 @@ namespace FlushMarketDataBinanceConsole
                     transaction.Rollback();
                 }
             }
+        }
+
+        public WebProxy GetProxy(Proxy proxy)
+        {
+            return new WebProxy(proxy.IP, proxy.Port)
+            {
+                UseDefaultCredentials = true
+            };
         }
     }
 }

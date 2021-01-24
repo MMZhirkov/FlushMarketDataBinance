@@ -22,7 +22,7 @@ namespace FlushMarketDataBinanceApi
             _secretKey = secretKey;
         }
 
-        private async Task<T> HandleResponse<T>(HttpResponseMessage message, string requestMessage, string fullCacheKey) where T : class
+        private async Task<T> HandleResponse<T>(HttpResponseMessage message, string requestMessage) where T : class
         {
             if (message.IsSuccessStatusCode)
             {
@@ -73,7 +73,6 @@ namespace FlushMarketDataBinanceApi
                 new BinanceException("Binance API Error", errorObject);
         }
 
-
         /// <summary>
         /// Processes a GET request
         /// </summary>
@@ -81,98 +80,21 @@ namespace FlushMarketDataBinanceApi
         /// <param name="endpoint"></param>
         /// <param name="receiveWindow"></param>
         /// <returns></returns>
-        public async Task<T> ProcessGetRequest<T>(BinanceEndpointData endpoint, int receiveWindow = 5000) where T : class
+        public async Task<T> ProcessGetRequest<T>(HttpClient httpClient, BinanceEndpointData endpoint, int receiveWindow = 5000) where T : class
         {
-            var fullKey = $"{typeof(T).Name}-{endpoint.Uri.AbsoluteUri}";
-
             HttpResponseMessage message;
             switch (endpoint.SecurityType) { 
                 case EndpointSecurityType.ApiKey:
                 case EndpointSecurityType.None:
-                    message = await RequestClient.GetRequest(endpoint.Uri);
+                    message = await RequestClient.GetRequest(httpClient, endpoint.Uri);
                     break;
                 case EndpointSecurityType.Signed:
-                    message = await RequestClient.SignedGetRequest(endpoint.Uri, _secretKey, endpoint.Uri.Query, receiveWindow);
+                    message = await RequestClient.SignedGetRequest(httpClient, endpoint.Uri, _secretKey, endpoint.Uri.Query, receiveWindow);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            return await HandleResponse<T>(message, endpoint.ToString(), fullKey);
-        }
-
-        /// <summary>
-        /// Processes a DELETE request
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="endpoint"></param>
-        /// <param name="receiveWindow"></param>
-        /// <returns></returns>
-        public async Task<T> ProcessDeleteRequest<T>(BinanceEndpointData endpoint, int receiveWindow = 5000) where T : class
-        {
-            var fullKey = $"{typeof(T).Name}-{endpoint.Uri.AbsoluteUri}";
-
-            HttpResponseMessage message;
-            switch (endpoint.SecurityType) { 
-                case EndpointSecurityType.ApiKey:
-                    message = await RequestClient.DeleteRequest(endpoint.Uri);
-                    break;
-                case EndpointSecurityType.Signed:
-                    message = await RequestClient.SignedDeleteRequest(endpoint.Uri, _apiKey, _secretKey, endpoint.Uri.Query, receiveWindow);
-                    break;
-                case EndpointSecurityType.None:
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-            return await HandleResponse<T>(message, endpoint.ToString(), fullKey);
-        }
-
-        /// <summary>
-        /// Processes a POST request
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="endpoint"></param>
-        /// <param name="receiveWindow"></param>
-        /// <returns></returns>
-        public async Task<T> ProcessPostRequest<T>(BinanceEndpointData endpoint, int receiveWindow = 5000) where T : class
-        {
-            var fullKey = $"{typeof(T).Name}-{endpoint.Uri.AbsoluteUri}";
-            HttpResponseMessage message;
-            switch (endpoint.SecurityType) { 
-                case EndpointSecurityType.ApiKey:
-                    message = await RequestClient.PostRequest(endpoint.Uri);
-                    break;
-                case EndpointSecurityType.None:
-                    throw new ArgumentOutOfRangeException();
-                case EndpointSecurityType.Signed:
-                    message = await RequestClient.SignedPostRequest(endpoint.Uri, _apiKey, _secretKey, endpoint.Uri.Query, receiveWindow);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-            return await HandleResponse<T>(message, endpoint.ToString(), fullKey);
-        }
-
-        /// <summary>
-        /// Processes a PUT request
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="endpoint"></param>
-        /// <param name="receiveWindow"></param>
-        /// <returns></returns>
-        public async Task<T> ProcessPutRequest<T>(BinanceEndpointData endpoint, int receiveWindow = 5000) where T : class
-        {
-            var fullKey = $"{typeof(T).Name}-{endpoint.Uri.AbsoluteUri}";
-            HttpResponseMessage message;
-            switch (endpoint.SecurityType) { 
-                case EndpointSecurityType.ApiKey:
-                    message = await RequestClient.PutRequest(endpoint.Uri);
-                    break;
-                case EndpointSecurityType.None:
-                case EndpointSecurityType.Signed:
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-            return await HandleResponse<T>(message, endpoint.ToString(), fullKey);
+            return await HandleResponse<T>(message, endpoint.ToString());
         }
     }
 }

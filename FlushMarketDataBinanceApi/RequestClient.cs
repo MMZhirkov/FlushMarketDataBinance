@@ -13,14 +13,13 @@ namespace FlushMarketDataBinanceApi
 {
     internal static class RequestClient
     {
-        private static readonly HttpClient HttpClient;
+        //private static readonly HttpClient HttpClient;
         private static SemaphoreSlim _rateSemaphore;
         private static int _limit = 10;
         /// <summary>
         /// Number of seconds the for the Limit of requests (10 seconds for 10 requests etc)
         /// </summary>
         public static int SecondsLimit = 10;
-        private static string _apiKey = string.Empty;
         private static bool RateLimitingEnabled = false;
         private const string APIHeader = "X-MBX-APIKEY";
         private static readonly Stopwatch Stopwatch;
@@ -30,25 +29,15 @@ namespace FlushMarketDataBinanceApi
 
         static RequestClient()
         {
-            var httpClientHandler = new HttpClientHandler
-            {
-                AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
-            };
-            HttpClient = new HttpClient(httpClientHandler);
-            HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            //var httpClientHandler = new HttpClientHandler
+            //{
+            //    AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
+            //};
+
+            //HttpClient = new HttpClient(httpClientHandler);
+            //HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _rateSemaphore = new SemaphoreSlim(_limit, _limit);
             Stopwatch = new Stopwatch();
-        }
-
-
-        /// <summary>
-        /// Recreates the Semaphore, and reassigns a Limit
-        /// </summary>
-        /// <param name="limit">Request limit</param>
-        public static void SetRequestLimit(int limit)
-        {
-            _limit = limit;
-            _rateSemaphore = new SemaphoreSlim(limit, limit);
         }
 
         /// <summary>
@@ -66,46 +55,36 @@ namespace FlushMarketDataBinanceApi
         /// <param name="enabled"></param>
         public static void SetRateLimiting(bool enabled)
         {
-            var set = enabled ? "enabled" : "disabled";
             RateLimitingEnabled = enabled;
         }
 
         /// <summary>
         /// Assigns a new seconds limit
         /// </summary>
-        /// <param name="limit">Seconds limit</param>
-        public static void SetSecondsLimit(int limit)
-        {
-            SecondsLimit = limit;
-        }
-
-        /// <summary>
-        /// Assigns a new seconds limit
-        /// </summary>
         /// <param name="key">Your API Key</param>
-        public static void SetAPIKey(string key)
-        {
-            if (HttpClient.DefaultRequestHeaders.Contains(APIHeader))
-            {
-                lock (LockObject)
-                {
-                    if (HttpClient.DefaultRequestHeaders.Contains(APIHeader))
-                    {
-                        HttpClient.DefaultRequestHeaders.Remove(APIHeader);
-                    }
-                }
-            }
-            HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(APIHeader, new[] { key });
-        }
+        //public static void SetAPIKey(string key)
+        //{
+        //    if (HttpClient.DefaultRequestHeaders.Contains(APIHeader))
+        //    {
+        //        lock (LockObject)
+        //        {
+        //            if (HttpClient.DefaultRequestHeaders.Contains(APIHeader))
+        //            {
+        //                HttpClient.DefaultRequestHeaders.Remove(APIHeader);
+        //            }
+        //        }
+        //    }
+        //    HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(APIHeader, new[] { key });
+        //}
 
         /// <summary>
         /// Create a generic GetRequest to the specified endpoint
         /// </summary>
         /// <param name="endpoint"></param>
         /// <returns></returns>
-        public static async Task<HttpResponseMessage> GetRequest(Uri endpoint)
+        public static async Task<HttpResponseMessage> GetRequest(HttpClient httpClient, Uri endpoint)
         {
-            return await CreateRequest(endpoint);
+            return await CreateRequest(httpClient, endpoint);
         }
 
         /// <summary>
@@ -116,10 +95,10 @@ namespace FlushMarketDataBinanceApi
         /// <param name="signatureRawData"></param>
         /// <param name="receiveWindow"></param>
         /// <returns></returns>
-        public static async Task<HttpResponseMessage> SignedGetRequest(Uri endpoint, string secretKey, string signatureRawData, long receiveWindow = 5000)
+        public static async Task<HttpResponseMessage> SignedGetRequest(HttpClient httpClient, Uri endpoint, string secretKey, string signatureRawData, long receiveWindow = 5000)
         {
             var uri = CreateValidUri(endpoint, secretKey, signatureRawData, receiveWindow);
-            return await CreateRequest(uri, HttpVerb.GET);
+            return await CreateRequest(httpClient, uri, HttpVerb.GET);
         }
 
         /// <summary>
@@ -127,19 +106,9 @@ namespace FlushMarketDataBinanceApi
         /// </summary>
         /// <param name="endpoint"></param>
         /// <returns></returns>
-        public static async Task<HttpResponseMessage> PostRequest(Uri endpoint)
+        public static async Task<HttpResponseMessage> PostRequest(HttpClient httpClient, Uri endpoint)
         {
-            return await CreateRequest(endpoint, HttpVerb.POST);
-        }
-
-        /// <summary>
-        /// Create a generic DeleteRequest to the specified endpoint
-        /// </summary>
-        /// <param name="endpoint"></param>
-        /// <returns></returns>
-        public static async Task<HttpResponseMessage> DeleteRequest(Uri endpoint)
-        {
-            return await CreateRequest(endpoint, HttpVerb.DELETE);
+            return await CreateRequest(httpClient, endpoint, HttpVerb.POST);
         }
 
         /// <summary>
@@ -147,9 +116,9 @@ namespace FlushMarketDataBinanceApi
         /// </summary>
         /// <param name="endpoint"></param>
         /// <returns></returns>
-        public static async Task<HttpResponseMessage> PutRequest(Uri endpoint)
+        public static async Task<HttpResponseMessage> PutRequest(HttpClient httpClient, Uri endpoint)
         {
-            return await CreateRequest(endpoint, HttpVerb.PUT);
+            return await CreateRequest(httpClient, endpoint, HttpVerb.PUT);
         }
 
         /// <summary>
@@ -161,27 +130,11 @@ namespace FlushMarketDataBinanceApi
         /// <param name="signatureRawData"></param>
         /// <param name="receiveWindow"></param>
         /// <returns></returns>
-        public static async Task<HttpResponseMessage> SignedPostRequest(Uri endpoint, string apiKey, string secretKey, string signatureRawData, long receiveWindow = 5000)
+        public static async Task<HttpResponseMessage> SignedPostRequest(HttpClient httpClient, Uri endpoint, string apiKey, string secretKey, string signatureRawData, long receiveWindow = 5000)
         {
             var uri = CreateValidUri(endpoint, secretKey, signatureRawData, receiveWindow);
-            return await CreateRequest(uri, HttpVerb.POST);
+            return await CreateRequest(httpClient, uri, HttpVerb.POST);
         }
-
-        /// <summary>
-        /// Creates a generic DELETE request that is signed
-        /// </summary>
-        /// <param name="endpoint"></param>
-        /// <param name="apiKey"></param>
-        /// <param name="secretKey"></param>
-        /// <param name="signatureRawData"></param>
-        /// <param name="receiveWindow"></param>
-        /// <returns></returns>
-        public static async Task<HttpResponseMessage> SignedDeleteRequest(Uri endpoint, string apiKey, string secretKey, string signatureRawData, long receiveWindow = 5000)
-        {
-            var uri = CreateValidUri(endpoint, secretKey, signatureRawData, receiveWindow);
-            return await CreateRequest(uri, HttpVerb.DELETE);
-        }
-
 
         /// <summary>
         /// Creates a valid Uri with signature
@@ -225,7 +178,7 @@ namespace FlushMarketDataBinanceApi
         /// <param name="endpoint">Endpoint to request</param>
         /// <param name="verb"></param>
         /// <returns></returns>
-        private static async Task<HttpResponseMessage> CreateRequest(Uri endpoint, HttpVerb verb = HttpVerb.GET)
+        private static async Task<HttpResponseMessage> CreateRequest(HttpClient httpClient, Uri endpoint, HttpVerb verb = HttpVerb.GET)
         {
             Task<HttpResponseMessage> task = null;
 
@@ -254,19 +207,19 @@ namespace FlushMarketDataBinanceApi
             switch (verb)
             {
                 case HttpVerb.GET:
-                    task = await HttpClient.GetAsync(endpoint)
+                    task = await httpClient.GetAsync(endpoint)
                         .ContinueWith(taskFunction);
                     break;
                 case HttpVerb.POST:
-                    task = await HttpClient.PostAsync(endpoint, null)
+                    task = await httpClient.PostAsync(endpoint, null)
                         .ContinueWith(taskFunction);
                     break;
                 case HttpVerb.DELETE:
-                    task = await HttpClient.DeleteAsync(endpoint)
+                    task = await httpClient.DeleteAsync(endpoint)
                         .ContinueWith(taskFunction);
                     break;
                 case HttpVerb.PUT:
-                    task = await HttpClient.PutAsync(endpoint, null)
+                    task = await httpClient.PutAsync(endpoint, null)
                         .ContinueWith(taskFunction);
                     break;
                 default:
