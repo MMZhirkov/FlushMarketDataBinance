@@ -15,18 +15,21 @@ namespace FlushMarketDataBinanceConsole
 	public class FlushMarketData : IJob
 	{
 		public async Task Execute(IJobExecutionContext context)
-		{
+		 {
             using (var helper = new Helper())
             {
+                if (!Settings.ProxyList.Any())
+                    return;
+
                 var firstTimePair = Settings.ProxyList.OrderBy(s => s.Value.LastUseTime).FirstOrDefault();
                 firstTimePair.Value.LastUseTime = DateTime.Now;
-
+                
                 var binanceClient = new BinanceClient(new ClientConfiguration()
                 {
                     ApiKey = Settings.ApiKey,
                     SecretKey = Settings.SecretKey
-                });
-
+                }); 
+                
                 var httpClientHandler = new HttpClientHandler
                 {
                     AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip,
@@ -36,21 +39,10 @@ namespace FlushMarketDataBinanceConsole
 
                 var httpClient = new HttpClient(httpClientHandler);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                try
-                {
-                    var testResponse = await httpClient.GetStringAsync($"https://api.binance.com/api/v3/depth?symbol=ETHUSDT&limit=500");
-                }
-                catch (Exception ex)
-                {
-
-                    throw;
-                }
-               
 
                 var orderBooks = new Dictionary<string, OrderBookResponse>();
-
-                await helper.FillListOrderBooks(binanceClient, orderBooks, httpClient);
-
+                await helper.FillListOrderBooks(binanceClient, orderBooks, httpClient, firstTimePair.Key);
+               
                 if (!orderBooks.Any())
                     return;
 

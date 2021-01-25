@@ -16,7 +16,6 @@ namespace FlushMarketDataBinanceConsole
             logger.Info($"Запущен {MethodBase.GetCurrentMethod()}");
 
             Settings.InitConfig();
-            Helper.FillProxy();
             InitSheduller();
 
             logger.Info($"{MethodBase.GetCurrentMethod()} отработал");
@@ -29,21 +28,37 @@ namespace FlushMarketDataBinanceConsole
 
             var factory = new StdSchedulerFactory();
             var scheduler = await factory.GetScheduler();
-            var jobData = new JobDataMap();
-            var job = JobBuilder.Create<FlushMarketData>()
-                .WithIdentity("job1", "group1")
-                .SetJobData(jobData)
+            var jobFlushMarketData = JobBuilder.Create<FlushMarketData>()
+                .WithIdentity("jobFlushMarketData", "groupFlushMarketData")
                 .Build();
-
-            var trigger = TriggerBuilder.Create()
-                .WithIdentity("trigger1", "group1")
-                .StartNow()
+            var triggerFlushMarketData = TriggerBuilder.Create()
+                .WithIdentity("triggerFlushMarketData", "groupFlushMarketData")
+                .StartAt(DateTime.UtcNow.AddMinutes(5))
                 .WithSimpleSchedule(x => x
                     .RepeatForever())
-                    .WithCronSchedule(Settings.CronExpression)
+                    .WithCronSchedule(Settings.CronExpressionFlushMarketData)
                 .Build();
+            var jobFillProxyList = JobBuilder.Create<FillProxyList>()
+                .WithIdentity("jobFillProxyList", "groupFillProxyList")
+                .Build();
+            var triggerFillProxyList = TriggerBuilder.Create()
+               .WithIdentity("triggerFillProxyList", "groupFillProxyList")
+               .StartNow()
+               .WithSimpleSchedule(x => x
+                   .RepeatForever())
+                   .WithCronSchedule(Settings.CronExpressionFillProxy)
+               .Build();
+            var jobFillProxyListOnlyStartProgram = JobBuilder.Create<FillProxyList>()
+               .WithIdentity("jobFillProxyListOnlyStartProgram", "groupFillProxyListOnlyStartProgram")
+               .Build();
+            var triggerFillProxyListOnlyStartProgram = TriggerBuilder.Create()
+              .WithIdentity("triggerFillProxyListOnlyStartProgram", "groupFillProxyListOnlyStartProgram")
+              .StartNow()
+              .Build();
 
-            await scheduler.ScheduleJob(job, trigger);
+            await scheduler.ScheduleJob(jobFillProxyListOnlyStartProgram, triggerFillProxyListOnlyStartProgram);
+            await scheduler.ScheduleJob(jobFlushMarketData, triggerFlushMarketData);
+            await scheduler.ScheduleJob(jobFillProxyList, triggerFillProxyList);
             await scheduler.Start();
 
             Console.ReadKey();

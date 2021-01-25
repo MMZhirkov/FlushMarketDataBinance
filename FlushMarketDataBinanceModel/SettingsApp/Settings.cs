@@ -12,8 +12,8 @@ namespace FlushMarketDataBinanceModel.SettingsApp
         public static string ApiKey { get; private set; }
         public static string SecretKey { get; private set; }
         public static string ConnectionString { get; private set; }
-        public static string CronExpression { get; private set; }
-
+        public static string CronExpressionFlushMarketData { get; private set; }
+        public static string CronExpressionFillProxy { get; private set; }
         /// <summary>
         /// url hidemy.name для парсинга нужных прокси по фильтру
         /// </summary>
@@ -36,12 +36,13 @@ namespace FlushMarketDataBinanceModel.SettingsApp
             Settings.ConnectionString = config.GetConnectionString("DefaultConnection");
             Settings.ApiKey = config.GetSection("BinanceApi:apiKey")?.Value;
             Settings.SecretKey = config.GetSection("BinanceApi:secretKey")?.Value;
-            Settings.CronExpression = config.GetSection("Cron:cronExpression")?.Value;
+            Settings.CronExpressionFlushMarketData = config.GetSection("Cron:cronExpressionFlushMarketData")?.Value;
+            Settings.CronExpressionFillProxy = config.GetSection("Cron:cronExpressionFillProxy")?.Value;
             Settings.Symbols = config.GetSection("BinanceApi:symbols")?.Value?.ToUpper()?.Replace(" ", string.Empty)?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             Settings.UrlProxyHidemy = config.GetSection("Proxy:urlProxyHidemy")?.Value;
             Settings.UrlProxyScrape = config.GetSection("Proxy:urlProxyScrape")?.Value;
 
-            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey) || string.IsNullOrEmpty(Settings.CronExpression) || string.IsNullOrEmpty(Settings.UrlProxyHidemy) || string.IsNullOrEmpty(Settings.UrlProxyScrape))
+            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey) || string.IsNullOrEmpty(Settings.CronExpressionFlushMarketData) || string.IsNullOrEmpty(Settings.CronExpressionFillProxy) || string.IsNullOrEmpty(Settings.UrlProxyHidemy) || string.IsNullOrEmpty(Settings.UrlProxyScrape))
                 throw new Exception("Заполните обязательные параметры в конфиге");
         }
     }

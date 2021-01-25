@@ -27,9 +27,9 @@ namespace FlushMarketDataBinanceConsole
             GC.SuppressFinalize(this);
         }
 
-        public async Task FillListOrderBooks(BinanceClient client, Dictionary<string, OrderBookResponse> orderBooks, HttpClient httpClient)
+        public async Task FillListOrderBooks(BinanceClient client, Dictionary<string, OrderBookResponse> orderBooks, HttpClient httpClient, string key)
         {
-            logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
+            logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}, ipProxy = {key}");
 
             foreach (var symbol in Settings.Symbols)
             {
@@ -39,7 +39,8 @@ namespace FlushMarketDataBinanceConsole
                 }
                 catch (Exception ex)
                 {
-                    logger.Error($"err, symbol = {symbol}, {ex.Message}");
+                    var resultRemove = Settings.ProxyList.TryRemove(key, out Proxy outValue);
+                    logger.Error($"err, symbol = {symbol}, {ex.Message}, remove {outValue?.UriProxy}  result = {resultRemove}");
                 }
             }
 
@@ -79,7 +80,7 @@ namespace FlushMarketDataBinanceConsole
             }
         }
 
-        public static void FillProxy()
+        public async Task FillProxy()
         {
             FillProxyFromProxyScrape();
             FillProxyFromHidemy();
@@ -95,7 +96,6 @@ namespace FlushMarketDataBinanceConsole
                 }))
                 {
                     var response = httpClient.GetAsync(Settings.UrlProxyScrape, HttpCompletionOption.ResponseHeadersRead).Result;
-
                     if (!response.IsSuccessStatusCode)
                         return;
 
@@ -111,9 +111,10 @@ namespace FlushMarketDataBinanceConsole
                         {
                             if (!Uri.TryCreate($"http://{uri}", UriKind.Absolute, out Uri newUri))
                                 continue;
-                            
-                            if (CheckProxy(newUri))
-                                Settings.ProxyList.TryAdd(uri.Split(":")[0], new Proxy(newUri));
+
+                            var ipProxy = uri.Split(":")[0];
+                            if (CheckProxy(newUri) && !Settings.ProxyList.TryGetValue(ipProxy, out Proxy existProxy))
+                                Settings.ProxyList.TryAdd(ipProxy, new Proxy(newUri));
                         }
                     }
                 }
