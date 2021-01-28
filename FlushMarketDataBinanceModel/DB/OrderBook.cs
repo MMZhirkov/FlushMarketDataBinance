@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FlushMarketDataBinanceModel.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace FlushMarketDataBinanceModel
@@ -11,7 +12,12 @@ namespace FlushMarketDataBinanceModel
         ///   Наименования пары
         /// </summary>
         public string Symbol { get; set; }
-        
+
+        /// <summary>
+        ///   Тип актива
+        /// </summary>
+        public FinActive TypeActive { get; set; }
+
         /// <summary>
         /// Все заявки в стакане котировок(слепок в определенный момент)
         /// </summary>

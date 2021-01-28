@@ -1,5 +1,6 @@
 ﻿using FlushMarketDataBinanceApi.ApiModels.Response;
 using FlushMarketDataBinanceApi.Client;
+using FlushMarketDataBinanceModel;
 using FlushMarketDataBinanceModel.SettingsApp;
 using Quartz;
 using System;
@@ -16,14 +17,10 @@ namespace FlushMarketDataBinanceConsole
 	{
 		public async Task Execute(IJobExecutionContext context)
 		 {
+            Console.WriteLine($"Task start, {DateTime.Now}");
+
             using (var helper = new Helper())
             {
-                if (!Settings.ProxyList.Any())
-                    return;
-
-                var firstTimePair = Settings.ProxyList.OrderBy(s => s.Value.LastUseTime).FirstOrDefault();
-                firstTimePair.Value.LastUseTime = DateTime.Now;
-                
                 var binanceClient = new BinanceClient(new ClientConfiguration()
                 {
                     ApiKey = Settings.ApiKey,
@@ -32,24 +29,36 @@ namespace FlushMarketDataBinanceConsole
                 
                 var httpClientHandler = new HttpClientHandler
                 {
-                    AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip,
-                    UseProxy = true,
-                    Proxy = new WebProxy(firstTimePair.Value.UriProxy)
+                    AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
                 };
+
+                var keyFirstTimePair = string.Empty;
+                var hasProxyList = Settings.ProxyList.Any();
+                if (hasProxyList)
+                {
+                    var firstTimePair = Settings.ProxyList.OrderBy(s => s.Value.LastUseTime).FirstOrDefault();
+                    firstTimePair.Value.LastUseTime = DateTime.Now;
+                    keyFirstTimePair = firstTimePair.Key;
+
+                    httpClientHandler.UseProxy = true;
+                    httpClientHandler.Proxy = new WebProxy(firstTimePair.Value.UriProxy);
+                }
 
                 var httpClient = new HttpClient(httpClientHandler);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                httpClient.Timeout = new TimeSpan(0,0,0,0,1000);
 
-                var orderBooks = new Dictionary<string, OrderBookResponse>();
-                await helper.FillListOrderBooks(binanceClient, orderBooks, httpClient, firstTimePair.Key);
+                var orderBooks = new Dictionary<string, OrderBook>();
+
+                await helper.FillListOrderBooks(binanceClient, orderBooks, httpClient, keyFirstTimePair);
                
                 if (!orderBooks.Any())
                     return;
 
                 helper.RecordOrderBooksInDB(orderBooks);
-            }
 
-            Console.WriteLine($"Task done, {DateTime.Now}");
+                Console.WriteLine($"Task done, {DateTime.Now}, ProxyList.Any - {hasProxyList}");
+            }
 		}
 	}
 }

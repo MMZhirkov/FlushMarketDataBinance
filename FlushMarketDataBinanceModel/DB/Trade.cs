@@ -1,4 +1,6 @@
-﻿namespace FlushMarketDataBinanceModel
+﻿using FlushMarketDataBinanceModel.Enums;
+
+namespace FlushMarketDataBinanceModel
 {
     public class Trade
     {
@@ -15,14 +17,9 @@
         public decimal Quantity { get; set; }
 
         /// <summary>
-        /// Заявку на покупку
+        /// Buy/Sell
         /// </summary>
-        public bool Bid { get; set; }
-
-        /// <summary>
-        /// Заявка на продажу
-        /// </summary>
-        public bool Ask { get; set; }
+        public OrderBookSide OrderBookSide { get; set; }
 
         public int OrderBookId { get; set; }
 

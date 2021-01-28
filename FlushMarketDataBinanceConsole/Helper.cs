@@ -3,6 +3,7 @@ using FlushMarketDataBinanceApi.Client;
 using FlushMarketDataBinanceModel;
 using FlushMarketDataBinanceModel.DAL;
 using FlushMarketDataBinanceModel.DB;
+using FlushMarketDataBinanceModel.Enums;
 using FlushMarketDataBinanceModel.SettingsApp;
 using NLog;
 using System;
@@ -21,13 +22,13 @@ namespace FlushMarketDataBinanceConsole
     public class Helper : IDisposable
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-
+        
         public void Dispose()
         {
             GC.SuppressFinalize(this);
         }
 
-        public async Task FillListOrderBooks(BinanceClient client, Dictionary<string, OrderBookResponse> orderBooks, HttpClient httpClient, string key)
+        public async Task FillListOrderBooks(BinanceClient client, Dictionary<string, OrderBook> orderBooks, HttpClient httpClient, string key)
         {
             logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}, ipProxy = {key}");
 
@@ -35,10 +36,37 @@ namespace FlushMarketDataBinanceConsole
             {
                 try
                 {
-                    orderBooks.Add(symbol, await client.GetOrderBook(httpClient, symbol, 500));
+                    var orderBookResponseFuture = await client.GetOrderBookFuture(httpClient, symbol, 500);
+                    var now = DateTime.Now;
+                    orderBooks.Add(symbol, new OrderBook()
+                    {
+                        Symbol = symbol,
+                        Trades =
+                        orderBookResponseFuture.Bids.Select(b => new Trade { Price = b.Price, Quantity = b.Quantity, OrderBookSide = OrderBookSide.Buy }).Concat(
+                        orderBookResponseFuture.Asks.Select(a => new Trade { Price = a.Price, Quantity = a.Quantity, OrderBookSide = OrderBookSide.Sell })).ToList(),
+                        TimeTrade = now,
+                        TypeActive = FinActive.Future
+                    });
+
+                    var orderBookResponseStock = await client.GetOrderBookStock(httpClient, symbol, 500);
+                    orderBooks.Add(symbol, new OrderBook()
+                    {
+                        Symbol = symbol,
+                        Trades =
+                         orderBookResponseStock.Bids.Select(b => new Trade { Price = b.Price, Quantity = b.Quantity, OrderBookSide = OrderBookSide.Buy }).Concat(
+                         orderBookResponseStock.Asks.Select(a => new Trade { Price = a.Price, Quantity = a.Quantity, OrderBookSide = OrderBookSide.Sell })).ToList(),
+                        TimeTrade = now,
+                        TypeActive = FinActive.Stock
+                    });
+
+                    Console.WriteLine($"Success request {key}");
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"Bad request, {key}");
+                    if (string.IsNullOrEmpty(key))
+                        return;
+
                     var resultRemove = Settings.ProxyList.TryRemove(key, out Proxy outValue);
                     logger.Error($"err, symbol = {symbol}, {ex.Message}, remove {outValue?.UriProxy}  result = {resultRemove}");
                 }
@@ -47,25 +75,17 @@ namespace FlushMarketDataBinanceConsole
             logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
         }
 
-        public void RecordOrderBooksInDB(Dictionary<string, OrderBookResponse> orderBooks)
+        public void RecordOrderBooksInDB(Dictionary<string, OrderBook> orderBooks)
         {
             logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
 
             using (var db = new OrderBookContext())
             {
-                var now = DateTime.Now;
-                var listOrderBooksForRecord = orderBooks.Select(o => new OrderBook 
-                {
-                    Symbol = o.Key.ToString(),
-                    Trades = o.Value.Bids.Select(b => new Trade { Price = b.Price, Quantity = b.Quantity, Bid = true })
-                         .Concat(o.Value.Asks.Select(a => new Trade { Price = a.Price, Quantity = a.Quantity, Ask = true })).ToList(),
-                    TimeTrade = now
-                });
                 var transaction = db.Database.BeginTransaction();
 
                 try
                 {
-                    db.OrderBooks.AddRange(listOrderBooksForRecord);
+                    db.OrderBooks.AddRange(orderBooks.Values);
                     db.SaveChanges();
 
                     transaction.Commit();

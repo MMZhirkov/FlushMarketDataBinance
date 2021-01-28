@@ -25,12 +25,20 @@ namespace FlushMarketDataBinanceApi.Client
         Task<ServerTimeResponse> GetServerTime(HttpClient httpClient);
 
         /// <summary>
-        /// Gets the current order book for the specified symbol
+        /// Gets the current order book for the specified symbol stock
         /// </summary>
         /// <param name="symbol">The symbole to retrieve the order book for</param>
         /// <param name="limit">Amount to request</param>
         /// <returns></returns>
-        Task<OrderBookResponse> GetOrderBook(HttpClient httpClient, string symbol, int limit);
+        Task<OrderBookResponse> GetOrderBookStock(HttpClient httpClient, string symbol, int limit);
+
+        /// <summary>
+        /// Gets the current order book for the specified symbol future
+        /// </summary>
+        /// <param name="symbol">The symbole to retrieve the order book for</param>
+        /// <param name="limit">Amount to request</param>
+        /// <returns></returns>
+        Task<OrderBookResponse> GetOrderBookFuture(HttpClient httpClient, string symbol, int limit);
 
         /// <summary>
         /// Gets all prices for all symbols

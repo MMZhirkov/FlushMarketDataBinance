@@ -12,14 +12,14 @@ namespace FlushMarketDataBinanceModel.SettingsApp
         public static string ApiKey { get; private set; }
         public static string SecretKey { get; private set; }
         public static string ConnectionString { get; private set; }
-        public static string CronExpressionFlushMarketData { get; private set; }
-        public static string CronExpressionFillProxy { get; private set; }
+        public static int? IntervalFlushMarketData { get; private set; }
+        public static int? IntervalFillProxy { get; private set; }
         /// <summary>
         /// url hidemy.name для парсинга нужных прокси по фильтру
         /// </summary>
         public static string UrlProxyHidemy { get; private set; }
         public static string UrlProxyScrape { get; private set; }
-        public static ConcurrentDictionary<string, Proxy> ProxyList { get;  set; } = new ConcurrentDictionary<string, Proxy>();
+        public static ConcurrentDictionary<string, Proxy> ProxyList { get; set; } = new ConcurrentDictionary<string, Proxy>();
 
         /// <summary>
         /// Наименования пар
@@ -36,13 +36,13 @@ namespace FlushMarketDataBinanceModel.SettingsApp
             Settings.ConnectionString = config.GetConnectionString("DefaultConnection");
             Settings.ApiKey = config.GetSection("BinanceApi:apiKey")?.Value;
             Settings.SecretKey = config.GetSection("BinanceApi:secretKey")?.Value;
-            Settings.CronExpressionFlushMarketData = config.GetSection("Cron:cronExpressionFlushMarketData")?.Value;
-            Settings.CronExpressionFillProxy = config.GetSection("Cron:cronExpressionFillProxy")?.Value;
+            Settings.IntervalFlushMarketData = int.Parse(config.GetSection("Interval:intervalFlushMarketDataInSec")?.Value);
+            Settings.IntervalFillProxy = int.Parse(config.GetSection("Interval:intervalFillProxyInMinute").Value);
             Settings.Symbols = config.GetSection("BinanceApi:symbols")?.Value?.ToUpper()?.Replace(" ", string.Empty)?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             Settings.UrlProxyHidemy = config.GetSection("Proxy:urlProxyHidemy")?.Value;
             Settings.UrlProxyScrape = config.GetSection("Proxy:urlProxyScrape")?.Value;
 
-            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey) || string.IsNullOrEmpty(Settings.CronExpressionFlushMarketData) || string.IsNullOrEmpty(Settings.CronExpressionFillProxy) || string.IsNullOrEmpty(Settings.UrlProxyHidemy) || string.IsNullOrEmpty(Settings.UrlProxyScrape))
+            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey) || Settings.IntervalFlushMarketData == null || Settings.IntervalFillProxy == null || string.IsNullOrEmpty(Settings.UrlProxyHidemy) || string.IsNullOrEmpty(Settings.UrlProxyScrape))
                 throw new Exception("Заполните обязательные параметры в конфиге");
         }
     }

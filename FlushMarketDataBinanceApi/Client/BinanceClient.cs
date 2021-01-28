@@ -13,7 +13,8 @@ namespace FlushMarketDataBinanceApi.Client
     /// </summary>
     public class BinanceClient : IBinanceClient
     {
-        public TimeSpan TimestampOffset {
+        public TimeSpan TimestampOffset
+        {
             get => _timestampOffset;
             set
             {
@@ -79,7 +80,7 @@ namespace FlushMarketDataBinanceApi.Client
         /// <param name="useCache"></param>
         /// <param name="limit">Amount to request - defaults to 100</param>
         /// <returns></returns>
-        public async Task<OrderBookResponse> GetOrderBook(HttpClient httpClient, string symbol, int limit = 100)
+        public async Task<OrderBookResponse> GetOrderBookStock(HttpClient httpClient, string symbol, int limit = 100)
         {
             Guard.AgainstNull(symbol);
             if (limit > 1000)
@@ -90,12 +91,29 @@ namespace FlushMarketDataBinanceApi.Client
         }
 
         /// <summary>
+        /// Gets the current depth order book for the specified symbol
+        /// </summary>
+        /// <param name="symbol">The symbole to retrieve the order book for</param>
+        /// <param name="useCache"></param>
+        /// <param name="limit">Amount to request - defaults to 100</param>
+        /// <returns></returns>
+        public async Task<OrderBookResponse> GetOrderBookFuture(HttpClient httpClient, string symbol, int limit = 100)
+        {
+            Guard.AgainstNull(symbol);
+            if (limit > 1000)
+            {
+                throw new ArgumentException("When requesting the order book, you can't request more than 1000 at a time.", nameof(limit));
+            }
+            return await _apiProcessor.ProcessGetRequest<OrderBookResponse>(httpClient, Endpoints.MarketDataFutureV1.OrderBook(symbol, limit));
+        }
+
+        /// <summary>
         /// Gets all prices for all symbols
         /// </summary>
         /// <returns></returns>
         public async Task<List<SymbolPriceResponse>> GetSymbolsPriceTicker(HttpClient httpClient)
         {
-             return await _apiProcessor.ProcessGetRequest<List<SymbolPriceResponse>>(httpClient, Endpoints.MarketDataV1.AllSymbolsPriceTicker);
+            return await _apiProcessor.ProcessGetRequest<List<SymbolPriceResponse>>(httpClient, Endpoints.MarketDataV1.AllSymbolsPriceTicker);
         }
 
         /// <summary>
@@ -104,7 +122,7 @@ namespace FlushMarketDataBinanceApi.Client
         /// <returns></returns>
         public async Task<List<SymbolOrderBookResponse>> GetSymbolOrderBookTicker(HttpClient httpClient)
         {
-             return await _apiProcessor.ProcessGetRequest<List<SymbolOrderBookResponse>>(httpClient, Endpoints.MarketDataV1.SymbolsOrderBookTicker);
+            return await _apiProcessor.ProcessGetRequest<List<SymbolOrderBookResponse>>(httpClient, Endpoints.MarketDataV1.SymbolsOrderBookTicker);
         }
 
         /// <summary>
