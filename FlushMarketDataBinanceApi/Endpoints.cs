@@ -33,7 +33,7 @@ namespace FlushMarketDataBinanceApi
             /// </summary>
             public static BinanceEndpointData OrderBook(string symbol, int limit)
             {
-                return new BinanceEndpointData(new Uri($"{APIPrefix}/{ApiVersion}/depth?symbol={symbol}&limit={limit}"), EndpointSecurityType.None);
+                return new BinanceEndpointData(new Uri($"{APIPrefix}{ApiVersion}/depth?symbol={symbol}&limit={limit}"), EndpointSecurityType.None);
             }
 
             /// <summary>

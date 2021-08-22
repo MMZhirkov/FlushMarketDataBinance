@@ -1,12 +1,8 @@
-﻿using System.Runtime.Serialization;
-
-namespace FlushMarketDataBinanceModel.Enums
+﻿namespace FlushMarketDataBinanceModel.Enums
 {
     public enum OrderBookSide
     {
-        [EnumMember(Value = "BUY")]
         Buy,
-        [EnumMember(Value = "SELL")]
-        Sell,
+        Sell
     }
 }

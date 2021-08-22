@@ -4,67 +4,59 @@ using System.Reflection;
 using Quartz;
 using Quartz.Impl;
 using FlushMarketDataBinanceModel.SettingsApp;
+using FlushMarketDataBinanceApi.Client;
+using System.Collections.Generic;
+using FlushMarketDataBinanceModel;
+using System.Net.Http.Headers;
+using System.Net;
+using System.Net.Http;
+using System.Linq;
 
 namespace FlushMarketDataBinanceConsole
 {
     class Program
     {
-        private static Logger logger = LogManager.GetCurrentClassLogger();
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
 
         public static void Main(string[] args)
         {
-            logger.Info($"Запущен {MethodBase.GetCurrentMethod()}");
+            _logger.Info($"Запущен {MethodBase.GetCurrentMethod()}");
 
             Settings.InitConfig();
-            InitSheduller();
 
-            logger.Info($"{MethodBase.GetCurrentMethod()} отработал");
-        }
+            var binanceClient = new BinanceClient(new ClientConfiguration()
+            {
+                ApiKey = Settings.ApiKey,
+                SecretKey = Settings.SecretKey
+            });
+
+            var httpClientHandler = new HttpClientHandler
+            {
+                AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
+            };
 
 
-        private async static void InitSheduller()
-        {
-            logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
+            var httpClient = new HttpClient(httpClientHandler);
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            var factory = new StdSchedulerFactory();
-            var scheduler = await factory.GetScheduler();
+            var orderBooks = new Dictionary<string, OrderBook>();
 
-            #region scheduler FlushMarketData
-            var jobFlushMarketData = JobBuilder.Create<FlushMarketData>()
-                .WithIdentity("jobFlushMarketData")
-                .Build();
-            var triggerFlushMarketData = TriggerBuilder.Create()
-                .WithIdentity("triggerFlushMarketData", "groupFlushMarketData")
-                .StartAt(DateTime.UtcNow.AddMinutes(3))
-                .WithSimpleSchedule(x => x
-                    .WithIntervalInSeconds(Settings.IntervalFlushMarketData.Value)
-                    .RepeatForever())
-                .ForJob(jobFlushMarketData)
-                .Build();
-            #endregion
+            using (var helper = new Helper())
+            {
+                while (true)
+                {
+                    helper.FillListOrderBooks(binanceClient, orderBooks, httpClient).GetAwaiter().GetResult();
+                    if (!orderBooks.Any())
+                        return;
 
-            #region scheduler FillProxyList
-            var jobFillProxyList = JobBuilder.Create<FillProxyList>()
-                .WithIdentity("jobFillProxyList")
-                .Build();
-            var triggerFillProxyList = TriggerBuilder.Create()
-               .WithIdentity("triggerFillProxyList", "groupFillProxyList")
-               .WithSimpleSchedule(x => x
-                    .WithIntervalInMinutes(Settings.IntervalFillProxy.Value)
-                    .RepeatForever())
-               .ForJob(jobFillProxyList)
-               .Build();
-            #endregion
+                    //helper.RecordOrderBooksInDB(orderBooks);
 
-            await scheduler.ScheduleJob(jobFlushMarketData, triggerFlushMarketData);
-            await scheduler.ScheduleJob(jobFillProxyList, triggerFillProxyList);
-            await scheduler.Start();
+                    orderBooks.Clear();
+                    Console.WriteLine($"Task done, {DateTime.Now}");
+                }
+            }
 
-            Console.ReadKey();
-
-            await scheduler.Shutdown();
-
-            logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
+            _logger.Info($"{MethodBase.GetCurrentMethod()} отработал");
         }
     }
 }
