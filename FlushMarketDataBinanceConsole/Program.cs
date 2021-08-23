@@ -1,22 +1,24 @@
 ﻿using NLog;
 using System;
 using System.Reflection;
-using Quartz;
-using Quartz.Impl;
 using FlushMarketDataBinanceModel.SettingsApp;
 using FlushMarketDataBinanceApi.Client;
-using System.Collections.Generic;
 using FlushMarketDataBinanceModel;
-using System.Net.Http.Headers;
 using System.Net;
 using System.Net.Http;
 using System.Linq;
+using System.Collections.Concurrent;
 
 namespace FlushMarketDataBinanceConsole
 {
     class Program
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private static HttpClient _httpClient = new HttpClient(
+                                                new HttpClientHandler
+                                                {
+                                                    AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
+                                                });
 
         public static void Main(string[] args)
         {
@@ -30,29 +32,25 @@ namespace FlushMarketDataBinanceConsole
                 SecretKey = Settings.SecretKey
             });
 
-            var httpClientHandler = new HttpClientHandler
-            {
-                AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
-            };
 
 
-            var httpClient = new HttpClient(httpClientHandler);
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            var orderBooks = new Dictionary<string, OrderBook>();
+            var orderBooks = new ConcurrentBag<OrderBook>();
 
             using (var helper = new Helper())
             {
+                var lastDateTimeRecordDB = DateTime.Now;
                 while (true)
                 {
-                    helper.FillListOrderBooks(binanceClient, orderBooks, httpClient).GetAwaiter().GetResult();
+                    helper.FillListOrderBooks(binanceClient, orderBooks, _httpClient).GetAwaiter().GetResult();
                     if (!orderBooks.Any())
                         return;
 
-                    //helper.RecordOrderBooksInDB(orderBooks);
+                    if (lastDateTimeRecordDB.AddSeconds(25) < DateTime.Now)
+                    {
 
-                    orderBooks.Clear();
-                    Console.WriteLine($"Task done, {DateTime.Now}");
+                        helper.RecordOrderBooksInDB(orderBooks);
+                        lastDateTimeRecordDB = DateTime.Now;
+                    }
                 }
             }
 

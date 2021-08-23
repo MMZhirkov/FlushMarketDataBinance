@@ -1,20 +1,16 @@
-﻿using FlushMarketDataBinanceApi.ApiModels.Response;
-using FlushMarketDataBinanceApi.Client;
+﻿using FlushMarketDataBinanceApi.Client;
 using FlushMarketDataBinanceModel;
 using FlushMarketDataBinanceModel.DAL;
-using FlushMarketDataBinanceModel.DB;
 using FlushMarketDataBinanceModel.Enums;
 using FlushMarketDataBinanceModel.SettingsApp;
 using NLog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace FlushMarketDataBinanceConsole
@@ -28,17 +24,18 @@ namespace FlushMarketDataBinanceConsole
             GC.SuppressFinalize(this);
         }
 
-        public async Task FillListOrderBooks(BinanceClient client, Dictionary<string, OrderBook> orderBooks, HttpClient httpClient)
+        public async Task FillListOrderBooks(BinanceClient client, ConcurrentBag<OrderBook> orderBooks, HttpClient httpClient)
         {
             logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}, ");
 
+            List<Task> TaskList = new List<Task>();
             foreach (var symbol in Settings.Symbols)
             {
-                try
+                TaskList.Add(Task.Run(async () =>
                 {
                     var orderBookResponseFuture = await client.GetOrderBookFuture(httpClient, symbol, 500);
                     var now = DateTime.Now;
-                    orderBooks.Add($"F_{symbol}", new OrderBook()
+                    orderBooks.Add(new OrderBook()
                     {
                         Symbol = symbol,
                         Trades =
@@ -47,32 +44,30 @@ namespace FlushMarketDataBinanceConsole
                         TimeTrade = now,
                         TypeActive = FinActive.Future
                     });
+                }));
 
-                    var orderBookResponseStock = await client.GetOrderBookStock(httpClient, symbol, 500);
-                    orderBooks.Add(symbol, new OrderBook()
+                TaskList.Add(Task.Run(async () =>
+                {
+                    var orderBookResponseFuture = await client.GetOrderBookFuture(httpClient, symbol, 500);
+                    var now = DateTime.Now;
+                    orderBooks.Add(new OrderBook()
                     {
                         Symbol = symbol,
                         Trades =
-                         orderBookResponseStock.Bids.Select(b => new Trade { Price = b.Price, Quantity = b.Quantity, OrderBookSide = OrderBookSide.Buy }).Concat(
-                         orderBookResponseStock.Asks.Select(a => new Trade { Price = a.Price, Quantity = a.Quantity, OrderBookSide = OrderBookSide.Sell })).ToList(),
+                        orderBookResponseFuture.Bids.Select(b => new Trade { Price = b.Price, Quantity = b.Quantity, OrderBookSide = OrderBookSide.Buy }).Concat(
+                        orderBookResponseFuture.Asks.Select(a => new Trade { Price = a.Price, Quantity = a.Quantity, OrderBookSide = OrderBookSide.Sell })).ToList(),
                         TimeTrade = now,
-                        TypeActive = FinActive.Stock
+                        TypeActive = FinActive.Future
                     });
-
-                    Console.WriteLine($"Success request ");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Bad request, symbol = {symbol}");
-
-                    logger.Error($"err, symbol = {symbol}, {ex.Message}");
-                }
+                }));
             }
+
+            Task.WaitAll(TaskList.ToArray());
 
             logger.Debug($"{MethodBase.GetCurrentMethod()} успешно отработал");
         }
 
-        public void RecordOrderBooksInDB(Dictionary<string, OrderBook> orderBooks)
+        public async void RecordOrderBooksInDB(ConcurrentBag<OrderBook> orderBooks)
         {
             logger.Debug($"Запущен {MethodBase.GetCurrentMethod()}");
 
@@ -82,7 +77,7 @@ namespace FlushMarketDataBinanceConsole
 
                 try
                 {
-                    db.OrderBooks.AddRange(orderBooks.Values);
+                    db.OrderBooks.AddRange(orderBooks);
                     db.SaveChanges();
 
                     transaction.Commit();
@@ -95,6 +90,7 @@ namespace FlushMarketDataBinanceConsole
                     transaction.Rollback();
                 }
             }
+            orderBooks.Clear();
         }
     }
 }
