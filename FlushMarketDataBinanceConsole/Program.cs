@@ -8,6 +8,8 @@ using System.Net;
 using System.Net.Http;
 using System.Linq;
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace FlushMarketDataBinanceConsole
 {
@@ -32,24 +34,37 @@ namespace FlushMarketDataBinanceConsole
                 SecretKey = Settings.SecretKey
             });
 
-
-
             var orderBooks = new ConcurrentBag<OrderBook>();
 
             using (var helper = new Helper())
             {
                 var lastDateTimeRecordDB = DateTime.Now;
+                var lastSendTimeRequest = DateTime.Now;
                 while (true)
                 {
-                    helper.FillListOrderBooks(binanceClient, orderBooks, _httpClient).GetAwaiter().GetResult();
-                    if (!orderBooks.Any())
-                        return;
-
-                    if (lastDateTimeRecordDB.AddSeconds(25) < DateTime.Now)
+                    try
                     {
+                        if (lastDateTimeRecordDB.AddSeconds(3) < DateTime.Now)
+                        {
+                            var orderBooksOnRecord = new List<OrderBook>(orderBooks);
+                            orderBooks.Clear();
+                            var t = Task.Run(() => helper.RecordOrderBooksInDB(orderBooksOnRecord));
+                            lastDateTimeRecordDB = DateTime.Now;
+                            helper.FillListOrderBooks(binanceClient, orderBooks, _httpClient);
+                            t.Wait();
+                            continue;
+                        }
 
-                        helper.RecordOrderBooksInDB(orderBooks);
-                        lastDateTimeRecordDB = DateTime.Now;
+                        if (lastSendTimeRequest.AddMilliseconds(500) < DateTime.Now)
+                        {
+                            helper.FillListOrderBooks(binanceClient, orderBooks, _httpClient);
+                            lastSendTimeRequest = DateTime.Now;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex.Message);
+                        continue;
                     }
                 }
             }
