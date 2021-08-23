@@ -10,8 +10,6 @@ namespace FlushMarketDataBinanceModel.SettingsApp
         public static string ApiKey { get; private set; }
         public static string SecretKey { get; private set; }
         public static string ConnectionString { get; private set; }
-        public static int? IntervalFlushMarketData { get; private set; }
-        public static int? IntervalFillProxy { get; private set; }
 
         /// <summary>
         /// Наименования пар
@@ -28,12 +26,10 @@ namespace FlushMarketDataBinanceModel.SettingsApp
             Settings.ConnectionString = config.GetConnectionString("DefaultConnection");
             Settings.ApiKey = config.GetSection("BinanceApi:apiKey")?.Value;
             Settings.SecretKey = config.GetSection("BinanceApi:secretKey")?.Value;
-            Settings.IntervalFlushMarketData = int.Parse(config.GetSection("Interval:intervalFlushMarketDataInSec")?.Value);
-            Settings.IntervalFillProxy = int.Parse(config.GetSection("Interval:intervalFillProxyInMinute").Value);
             Settings.Symbols = config.GetSection("BinanceApi:symbols")?.Value?.ToUpper()?.Replace(" ", string.Empty)?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
 
-            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey) || Settings.IntervalFlushMarketData == null || Settings.IntervalFillProxy == null)
+            if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey))
                 throw new Exception("Заполните обязательные параметры в конфиге");
         }
     }
