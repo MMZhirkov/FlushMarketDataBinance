@@ -85,7 +85,7 @@ namespace FlushMarketDataBinanceConsole
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"err, при записи OrderBook в бд возникла ошибка: {ex.Message}");
+                    _logger.Error($"err, при записи OrderBook в бд возникла ошибка: {ex.Message}, {ex.InnerException}");
                     transaction.Rollback();
                 }
             }
