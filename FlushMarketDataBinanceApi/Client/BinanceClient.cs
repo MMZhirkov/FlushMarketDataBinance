@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using FlushMarketDataBinanceApi.ApiModels.Response;
 using FlushMarketDataBinanceApi.Utility;
+using static FlushMarketDataBinanceApi.IAPIProcessor;
 
 namespace FlushMarketDataBinanceApi.Client
 {
@@ -137,6 +138,27 @@ namespace FlushMarketDataBinanceApi.Client
 
             return await _apiProcessor.ProcessGetRequest<SymbolPriceResponse>(httpClient, Endpoints.MarketDataV3.CurrentPrice(symbol));
         }
+        #endregion
+
+
+        #region Web Socket Client
+        /// <summary>
+        /// Listen to the Kline endpoint.
+        /// </summary>
+        /// <param name="symbol">Ticker symbol.</param>
+        /// <param name="interval">Time interval to retreive.</param>
+        /// <param name="klineHandler">Handler to be used when a message is received.</param>
+        public void ListenKlineEndpoint(string symbol, string interval, MessageHandler<KlineMessage> klineHandler)
+        {
+            if (string.IsNullOrWhiteSpace(symbol))
+            {
+                throw new ArgumentException("symbol cannot be empty. ", "symbol");
+            }
+
+            var param = symbol + $"@kline_{interval}";
+            _apiProcessor.ConnectToWebSocket(param, klineHandler);
+        }
+
         #endregion
     }
 }

@@ -10,6 +10,9 @@ using System.Linq;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using FlushMarketDataBinanceApi.Const;
+using FlushMarketDataBinanceApi.ApiModels.Response;
+using System.Threading;
 
 namespace FlushMarketDataBinanceConsole
 {
@@ -26,6 +29,8 @@ namespace FlushMarketDataBinanceConsole
         {
             _logger.Info($"Запущен {MethodBase.GetCurrentMethod()}");
 
+
+
             Settings.InitConfig();
 
             var binanceClient = new BinanceClient(new ClientConfiguration()
@@ -34,42 +39,54 @@ namespace FlushMarketDataBinanceConsole
                 SecretKey = Settings.SecretKey
             });
 
+            binanceClient.ListenKlineEndpoint("ethbtc", TimeInterval.minutes1, KlineHandler);
+
+
+
             var orderBooks = new ConcurrentBag<OrderBook>();
 
-            using (var helper = new Helper())
-            {
-                var lastDateTimeRecordDB = DateTime.Now;
-                var lastSendTimeRequest = DateTime.Now;
-                while (true)
-                {
-                    try
-                    {
-                        if (lastDateTimeRecordDB.AddSeconds(3) < DateTime.Now)
-                        {
-                            var orderBooksOnRecord = new List<OrderBook>(orderBooks);
-                            orderBooks.Clear();
-                            var t = Task.Run(() => helper.RecordOrderBooksInDB(orderBooksOnRecord));
-                            lastDateTimeRecordDB = DateTime.Now;
-                            helper.FillListOrderBooks(binanceClient, orderBooks, _httpClient);
-                            t.Wait();
-                            continue;
-                        }
+            //using (var helper = new Helper())
+            //{
+            //    var lastDateTimeRecordDB = DateTime.Now;
+            //    var lastSendTimeRequest = DateTime.Now;
+            //    while (true)
+            //    {
+            //        try
+            //        {
+            //            if (lastDateTimeRecordDB.AddSeconds(3) < DateTime.Now)
+            //            {
+            //                var orderBooksOnRecord = new List<OrderBook>(orderBooks);
+            //                orderBooks.Clear();
+            //                var t = Task.Run(() => helper.RecordOrderBooksInDB(orderBooksOnRecord));
+            //                lastDateTimeRecordDB = DateTime.Now;
+            //                helper.FillListOrderBooks(binanceClient, orderBooks, _httpClient);
+            //                t.Wait();
+            //                continue;
+            //            }
 
-                        if (lastSendTimeRequest.AddMilliseconds(500) < DateTime.Now)
-                        {
-                            helper.FillListOrderBooks(binanceClient, orderBooks, _httpClient);
-                            lastSendTimeRequest = DateTime.Now;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Error(ex.Message);
-                        continue;
-                    }
-                }
-            }
+            //            if (lastSendTimeRequest.AddMilliseconds(500) < DateTime.Now)
+            //            {
+            //                helper.FillListOrderBooks(binanceClient, orderBooks, _httpClient);
+            //                lastSendTimeRequest = DateTime.Now;
+            //            }
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            _logger.Error(ex.Message);
+            //            continue;
+            //        }
+            //    }
+            //}
 
             _logger.Info($"{MethodBase.GetCurrentMethod()} отработал");
+            Thread.Sleep(50000);
+        }
+
+        private static void KlineHandler(KlineMessage messageData)
+        {
+            var klineData = messageData;
+
+            var dateTimeStart = new DateTime().AddMilliseconds(klineData.KlineInfo.StartTime);
         }
     }
 }

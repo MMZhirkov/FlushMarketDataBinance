@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FlushMarketDataBinanceApi.ApiModels.Response.Error;
+using FlushMarketDataBinanceApi.Converter;
 using FlushMarketDataBinanceApi.Enums;
 using Newtonsoft.Json;
+using WebSocketSharp;
 
 namespace FlushMarketDataBinanceApi
 {
@@ -15,11 +18,19 @@ namespace FlushMarketDataBinanceApi
     {
         private readonly string _apiKey;
         private readonly string _secretKey;
+        private readonly string _webSocketEndpoint;
+
+        /// <summary>
+        /// Used to store all the opened web sockets.
+        /// </summary>
+        public List<WebSocket> _openSockets;
 
         public APIProcessor(string apiKey, string secretKey)
         {
             _apiKey = apiKey;
             _secretKey = secretKey;
+            _webSocketEndpoint = @"wss://stream.binance.com:9443/ws/";
+            _openSockets = new List<WebSocket>();
         }
 
         private async Task<T> HandleResponse<T>(HttpResponseMessage message, string requestMessage) where T : class
@@ -95,6 +106,50 @@ namespace FlushMarketDataBinanceApi
                     throw new ArgumentOutOfRangeException();
             }
             return await HandleResponse<T>(message, endpoint.ToString());
+        }
+
+        /// <summary>
+        /// Connects to a Websocket endpoint.
+        /// </summary>
+        /// <typeparam name="T">Type used to parsed the response message.</typeparam>
+        /// <param name="parameters">Paremeters to send to the Websocket.</param>
+        /// <param name="messageDelegate">Deletage to callback after receive a message.</param>
+        /// <param name="useCustomParser">Specifies if needs to use a custom parser for the response message.</param>
+        public void ConnectToWebSocket<T>(string parameters, IAPIProcessor.MessageHandler<T> messageHandler, bool useCustomParser = false)
+        {
+            var finalEndpoint = _webSocketEndpoint + parameters;
+
+            var ws = new WebSocket(finalEndpoint);
+
+            ws.OnMessage += (sender, e) =>
+            {
+                dynamic eventData;
+
+                if (useCustomParser)
+                {
+                    var customParser = new CustomParser();
+                    eventData = customParser.GetParsedDepthMessage(JsonConvert.DeserializeObject<dynamic>(e.Data));
+                }
+                else
+                {
+                    eventData = JsonConvert.DeserializeObject<T>(e.Data);
+                }
+
+                messageHandler(eventData);
+            };
+
+            ws.OnClose += (sender, e) =>
+            {
+                _openSockets.Remove(ws);
+            };
+
+            ws.OnError += (sender, e) =>
+            {
+                _openSockets.Remove(ws);
+            };
+
+            ws.Connect();
+            _openSockets.Add(ws);
         }
     }
 }
