@@ -10,9 +10,11 @@ namespace FlushMarketDataBinanceModel.SettingsApp
         public static string ApiKey { get; private set; }
         public static string SecretKey { get; private set; }
         public static string ConnectionString { get; private set; }
+        public static string TelegramToken { get; private set; }
+        public static string TelegramUser { get; private set; }
 
         /// <summary>
-        /// Наименования пар
+        /// Names Symbols
         /// </summary>
         public static string[] Symbols { get; private set; }
 
@@ -26,8 +28,9 @@ namespace FlushMarketDataBinanceModel.SettingsApp
             Settings.ConnectionString = config.GetConnectionString("DefaultConnection");
             Settings.ApiKey = config.GetSection("BinanceApi:apiKey")?.Value;
             Settings.SecretKey = config.GetSection("BinanceApi:secretKey")?.Value;
-            Settings.Symbols = config.GetSection("BinanceApi:symbols")?.Value?.ToUpper()?.Replace(" ", string.Empty)?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
+            Settings.Symbols = config.GetSection("BinanceApi:symbols")?.Value?.Replace(" ", string.Empty)?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            Settings.TelegramToken = config.GetSection("Telegram:token")?.Value;
+            Settings.TelegramUser = config.GetSection("Telegram:user")?.Value;
 
             if (string.IsNullOrEmpty(Settings.ConnectionString) || string.IsNullOrEmpty(Settings.ApiKey) || string.IsNullOrEmpty(Settings.SecretKey))
                 throw new Exception("Заполните обязательные параметры в конфиге");
