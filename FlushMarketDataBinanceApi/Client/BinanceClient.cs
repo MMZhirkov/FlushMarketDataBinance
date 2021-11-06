@@ -138,6 +138,17 @@ namespace FlushMarketDataBinanceApi.Client
 
             return await _apiProcessor.ProcessGetRequest<SymbolPriceResponse>(httpClient, Endpoints.MarketDataV3.CurrentPrice(symbol));
         }
+
+
+        /// <summary>
+        /// Gets 24 hour price change statistics for all currency pair symbols.
+        /// </summary>
+        /// <param name="symbol"></param>
+        /// <returns></returns>
+        public async Task<List<HR24Response>> GetAllPrices(HttpClient httpClient)
+        {
+            return await _apiProcessor.ProcessGetRequest<List<HR24Response>>(httpClient, Endpoints.MarketDataV3.HR24());
+        }
         #endregion
 
 

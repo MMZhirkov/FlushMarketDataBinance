@@ -28,9 +28,9 @@ namespace FlushMarketDataBinanceApi.ApiModels.Response
             [JsonProperty("L")]
             public int LastTradeId { get; set; }
             [JsonProperty("o")]
-            public decimal Open { get; set; }
+            public double Open { get; set; }
             [JsonProperty("c")]
-            public decimal Close { get; set; }
+            public double Close { get; set; }
             [JsonProperty("h")]
             public decimal High { get; set; }
             [JsonProperty("l")]

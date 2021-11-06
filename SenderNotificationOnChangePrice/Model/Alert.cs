@@ -6,7 +6,7 @@ namespace SenderNotificationOnChangePrice
     {
         public string Symbol { get; set; }
 
-        public decimal ProcentChangePrice { get; set; }
+        public double ProcentChangePrice { get; set; }
 
         public DateTime CreateOn { get; set; }
     }
