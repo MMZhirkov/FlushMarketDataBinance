@@ -1,10 +1,11 @@
 using System.Runtime.Serialization;
+using FlushMarketDataBinanceApi.Client;
 using Newtonsoft.Json;
 
 namespace FlushMarketDataBinanceApi.ApiModels.Response
 {
     [DataContract]
-    public class SymbolOrderBookResponse
+    public class SymbolOrderBookResponse : IResponse
     {
         [DataMember(Order = 1)]
         public string Symbol { get; set; }

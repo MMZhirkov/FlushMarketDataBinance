@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SenderNotificationOnChangePrice.Const;
+using System;
 
 namespace SenderNotificationOnChangePrice
 {
@@ -9,5 +10,7 @@ namespace SenderNotificationOnChangePrice
         public double ProcentChangePrice { get; set; }
 
         public DateTime CreateOn { get; set; }
+
+        public TypeAlert TypeAlert { get; set; }
     }
 }

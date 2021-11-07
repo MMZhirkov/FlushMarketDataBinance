@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FlushMarketDataBinanceApi.ApiModels.Response;
+using FlushMarketDataBinanceApi.Const;
 using FlushMarketDataBinanceApi.Utility;
 using static FlushMarketDataBinanceApi.IAPIProcessor;
 
@@ -78,7 +79,6 @@ namespace FlushMarketDataBinanceApi.Client
         /// Gets the current depth order book for the specified symbol
         /// </summary>
         /// <param name="symbol">The symbole to retrieve the order book for</param>
-        /// <param name="useCache"></param>
         /// <param name="limit">Amount to request - defaults to 100</param>
         /// <returns></returns>
         public async Task<OrderBookResponse> GetOrderBookStock(HttpClient httpClient, string symbol, int limit = 100)
@@ -95,7 +95,6 @@ namespace FlushMarketDataBinanceApi.Client
         /// Gets the current depth order book for the specified symbol
         /// </summary>
         /// <param name="symbol">The symbole to retrieve the order book for</param>
-        /// <param name="useCache"></param>
         /// <param name="limit">Amount to request - defaults to 100</param>
         /// <returns></returns>
         public async Task<OrderBookResponse> GetOrderBookFuture(HttpClient httpClient, string symbol, int limit = 100)
@@ -148,6 +147,18 @@ namespace FlushMarketDataBinanceApi.Client
         public async Task<List<HR24Response>> GetAllPrices(HttpClient httpClient)
         {
             return await _apiProcessor.ProcessGetRequest<List<HR24Response>>(httpClient, Endpoints.MarketDataV3.HR24());
+        }
+
+        /// <summary>
+        /// Gets candlestick bars for a symbol. Klines are uniquely identified by their open time.
+        /// </summary>
+        /// <param name="httpClient"></param>
+        /// <param name="symbol"></param>
+        /// <param name="interval"></param>
+        /// <returns></returns>
+        public async Task<List<Candlestick>> GetKline(HttpClient httpClient, string symbol, string interval, int limit = 1)
+        {
+            return await _apiProcessor.ProcessGetRequest<List<Candlestick>>(httpClient, Endpoints.MarketDataV3.Klines(symbol, interval, limit));
         }
         #endregion
 

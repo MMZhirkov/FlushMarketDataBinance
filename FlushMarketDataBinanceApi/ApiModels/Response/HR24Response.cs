@@ -1,6 +1,8 @@
-﻿namespace FlushMarketDataBinanceApi.ApiModels.Response
+﻿using FlushMarketDataBinanceApi.Client;
+
+namespace FlushMarketDataBinanceApi.ApiModels.Response
 {
-    public class HR24Response
+    public class HR24Response : IResponse
     {
         public string Symbol { get; set; }
         public double PriceChange { get; set; }
@@ -14,7 +16,7 @@
         public double OpenPrice { get; set; }
         public double HighPrice { get; set; }
         public double LowPrice { get; set; }
-        public double Volume { get; set; }
+        public decimal Volume { get; set; }
         public double QuoteVolume { get; set; }
         public long OpenTime { get; set; }
         public long CloseTime { get; set; }

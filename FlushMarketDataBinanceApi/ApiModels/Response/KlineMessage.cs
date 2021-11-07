@@ -1,8 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using FlushMarketDataBinanceApi.Client;
+using Newtonsoft.Json;
 
 namespace FlushMarketDataBinanceApi.ApiModels.Response
 {
-    public class KlineMessage
+    public class KlineMessage : IResponse
     {
         [JsonProperty("e")]
         public string EventType { get; set; }

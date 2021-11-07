@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using FlushMarketDataBinanceApi.Client;
+using System.Collections.Generic;
 
 namespace FlushMarketDataBinanceApi.ApiModels.Response
 {
-    public class DepthMessage
+    public class DepthMessage : IResponse
     {
         public string EventType { get; set; }
         public long EventTime { get; set; }

@@ -2,10 +2,7 @@
 
 namespace FlushMarketDataBinanceApi.ApiModels.Response
 {
-    /// <summary>
-    /// Empty Response
-    /// </summary>
-    public class EmptyResponse: IResponse
+    public class EmptyResponse : IResponse
     {
     }
 }

@@ -19,6 +19,11 @@ namespace FlushMarketDataBinanceModel.SettingsApp
         /// </summary>
         public static string[] Symbols { get; private set; }
 
+        /// <summary>
+        /// Names Symbols For OrderBook
+        /// </summary>
+        public static string[] SymbolsOrderBook { get; private set; }
+
         public static void InitConfig()
         {
             var builder = new ConfigurationBuilder();
@@ -30,6 +35,7 @@ namespace FlushMarketDataBinanceModel.SettingsApp
             Settings.ApiKey = config.GetSection("BinanceApi:apiKey")?.Value;
             Settings.SecretKey = config.GetSection("BinanceApi:secretKey")?.Value;
             Settings.Symbols = config.GetSection("BinanceApi:symbols")?.Value?.ToUpper()?.Replace(" ", string.Empty)?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            Settings.SymbolsOrderBook = config.GetSection("BinanceApi:symbolsOrderBook")?.Value?.ToUpper()?.Replace(" ", string.Empty)?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             Settings.TelegramToken = config.GetSection("Telegram:token")?.Value;
             Settings.TelegramUser = config.GetSection("Telegram:user")?.Value;
             Settings.ProcentChangePrice15min = int.Parse(config.GetSection("Query:ProcentChangePrice15min")?.Value);

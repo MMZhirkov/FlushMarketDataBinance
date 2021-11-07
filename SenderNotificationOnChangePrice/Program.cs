@@ -11,7 +11,7 @@ namespace SenderNotificationOnChangePrice
             Settings.InitConfig();
 
             var telegramClient = new TelegramBotClient(Settings.TelegramToken);
-            var senderAlertToTelegram = new SenderAlertToTelegram(telegramClient);
+            var senderAlertToTelegram = new ScannerOnChangePrice(telegramClient);
 
             telegramClient.StartReceiving();
             telegramClient.OnMessage += senderAlertToTelegram.OnMessageHandler;

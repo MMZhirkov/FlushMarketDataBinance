@@ -45,11 +45,11 @@ namespace FlushMarketDataBinanceApi
             }
 
             /// <summary>
-            /// Gets 24 hour price change statistics for all currency pair symbols.
+            /// Gets candlestick bars for a symbol. Klines are uniquely identified by their open time.
             /// </summary>
-            public static BinanceEndpointData Klines(string symbol, string interval)
+            public static BinanceEndpointData Klines(string symbol, string interval, int limit)
             {
-                return new BinanceEndpointData(new Uri($"{APIPrefix}{ApiVersion}/klines?symbol={symbol}&interval={interval}"), EndpointSecurityType.None);
+                return new BinanceEndpointData(new Uri($"{APIPrefix}{ApiVersion}/klines?symbol={symbol}&interval={interval}&limit={limit}"), EndpointSecurityType.None);
             }
 
             /// <summary>

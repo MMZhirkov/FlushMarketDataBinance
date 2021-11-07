@@ -1,3 +1,4 @@
+using FlushMarketDataBinanceApi.Client;
 using System.Runtime.Serialization;
 
 namespace FlushMarketDataBinanceApi.ApiModels.Response
@@ -6,7 +7,7 @@ namespace FlushMarketDataBinanceApi.ApiModels.Response
     /// Symbol price information
     /// </summary>
     [DataContract]
-    public class SymbolPriceResponse
+    public class SymbolPriceResponse : IResponse
     {
         [DataMember(Order = 1)]
         public string Symbol { get; set; }
